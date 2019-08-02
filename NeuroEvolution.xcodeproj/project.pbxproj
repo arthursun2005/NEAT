@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		8E1F7A0722EF9CF80046AD75 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E1F7A0622EF9CF80046AD75 /* main.cpp */; };
+		8E1F7A1222EFCF1C0046AD75 /* Network.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E1F7A1122EFCF1C0046AD75 /* Network.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +26,12 @@
 /* Begin PBXFileReference section */
 		8E1F7A0322EF9CF80046AD75 /* NeuroEvolution */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = NeuroEvolution; sourceTree = BUILT_PRODUCTS_DIR; };
 		8E1F7A0622EF9CF80046AD75 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		8E1F7A0D22EF9D5A0046AD75 /* Node.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Node.h; sourceTree = "<group>"; };
+		8E1F7A0E22EF9D710046AD75 /* Network.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Network.h; sourceTree = "<group>"; };
+		8E1F7A0F22EF9D980046AD75 /* common.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = common.h; sourceTree = "<group>"; };
+		8E1F7A1122EFCF1C0046AD75 /* Network.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Network.cpp; sourceTree = "<group>"; };
+		8E1F7A1622F172360046AD75 /* Population.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Population.h; path = ../../../../../../System/Volumes/Data/Users/arthur/work/code/NeuroEvolution/NeuroEvolution/Population.h; sourceTree = "<group>"; };
+		8E1F7A1722F2B2920046AD75 /* log.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = log.txt; path = ../../../../../../System/Volumes/Data/Users/arthur/work/code/NeuroEvolution/NeuroEvolution/log.txt; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +65,12 @@
 			isa = PBXGroup;
 			children = (
 				8E1F7A0622EF9CF80046AD75 /* main.cpp */,
+				8E1F7A1722F2B2920046AD75 /* log.txt */,
+				8E1F7A1622F172360046AD75 /* Population.h */,
+				8E1F7A1122EFCF1C0046AD75 /* Network.cpp */,
+				8E1F7A0E22EF9D710046AD75 /* Network.h */,
+				8E1F7A0D22EF9D5A0046AD75 /* Node.h */,
+				8E1F7A0F22EF9D980046AD75 /* common.h */,
 			);
 			path = NeuroEvolution;
 			sourceTree = "<group>";
@@ -118,6 +131,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8E1F7A1222EFCF1C0046AD75 /* Network.cpp in Sources */,
 				8E1F7A0722EF9CF80046AD75 /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -239,6 +253,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = CDS6RVS6JM;
+				GCC_OPTIMIZATION_LEVEL = s;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -248,6 +263,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = CDS6RVS6JM;
+				GCC_OPTIMIZATION_LEVEL = s;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
