@@ -176,7 +176,7 @@ namespace NE {
         node.links = 0;
         
         size_t i = nodes.size();
-        /*
+        
         if(next < i) {
             while(next != i && nodes[next].links != 0) {
                 ++next;
@@ -187,7 +187,7 @@ namespace NE {
                 return next;
             }
         }
-        */
+        
         nodes.push_back(node);
         
         return i;
