@@ -49,6 +49,8 @@ namespace NE {
         }
         
         Network* step() {
+            ++innovation;
+            
             size_t size = networks.size();
             size_t half_size = size / 2;
             
@@ -57,10 +59,13 @@ namespace NE {
             for(size_t i = 0; i < half_size; ++i) {
                 *(networks[i]) = *(networks[size - i - 1]);
                 networks[i]->mutate(innovation);
+                networks[i]->age = 0;
             }
             
-            ++innovation;
-            
+            for(size_t i = 0; i < size; ++i) {
+                //++networks[i]->age;
+            }
+
             return networks.back();
         }
         

@@ -17,7 +17,7 @@ NE::Population population;
 
 FILE* log_file;
 
-int gens = 256;
+int gens = 512;
 int pop = 1024;
 
 int trials = 12;
@@ -74,6 +74,8 @@ struct Pendulum : public Obj
         vx = NE::gaussian_randomf() * stdev;
         a = NE::gaussian_randomf() * stdev + M_PI;
         va = NE::gaussian_randomf() * stdev;
+        
+        x = (NE::randomf() - 0.5f) * 2.0f * 0.75f * xt;
     }
     
     void step(float dt) {
@@ -110,10 +112,12 @@ struct Pendulum : public Obj
         x = x + vx * dt;
         a = a + va * dt;
         
-        if(x < -xt) x = -xt;
-        if(x > xt) x = xt;
+        float q = x / xt;
         
-        reward += 0.5f * (cosf(a) + 1.0f) * (cosf(x / xt * M_PI * 0.5f));
+        q = q > 1.0f ? 1.0f : q;
+        q = q < -1.0f ? -1.0f : q;
+        
+        reward += 0.5f * (cosf(a) + 1.0f) * (cosf(q * M_PI * 0.5f));
     }
     
     void run() {

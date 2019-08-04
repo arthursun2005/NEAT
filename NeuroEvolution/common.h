@@ -13,6 +13,8 @@
 #include <functional>
 #include <random>
 
+#define NECHILDHOOD 64
+
 namespace NE {
     
     typedef float float_t;
@@ -37,6 +39,14 @@ namespace NE {
         thread_local std::default_random_engine g;
         thread_local std::normal_distribution<float_t> d(0.0, 1.0);
         return d(g);
+    }
+    
+    inline float_t randomf() {
+        return rand32() / (float_t) (uint32_t(-1));
+    }
+    
+    inline float_t randposneg() {
+        return rand32() <= (uint32_t(-1) >> 1) ? float_t(-1) : float_t(1);
     }
     
     enum function_types

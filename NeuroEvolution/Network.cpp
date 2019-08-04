@@ -40,6 +40,11 @@ namespace NE {
         output_size = outputs;
         
         next = -1;
+        age = 0;
+        
+        while(links_size < 1) {
+            mutate(0);
+        }
     }
     
     void Network::clear() {
@@ -127,11 +132,12 @@ namespace NE {
         }
         
         Link* link = links;
+        Node* ns = nodes.data();
         while(link != nullptr) {
             nodes[link->j].value += nodes[link->i].value * link->weight;
             
             if(link->next == nullptr || link->next->j != link->j) {
-                compute_node(nodes.data() + link->j);
+                compute_node(ns + link->j);
             }
 
             link = link->next;
@@ -194,6 +200,22 @@ namespace NE {
     }
     
     void Network::mutate(size_t innovation) {
+        size_t size = nodes.size();
+        
+        {
+            size_t q = 1 + links_size;
+            
+            Link* link = links;
+            while(link != nullptr) {
+                if((rand64() % q) == 0) link->weight += randomf() * randposneg();
+                link = link->next;
+            }
+            
+            for(Node& node : nodes) {
+                if((rand64() % q) == 0) node.bias += randomf() * randposneg();
+            }
+        }
+        
         uint32_t k = rand32() & 0xffff;
         
         if(k & 1) {
@@ -214,8 +236,6 @@ namespace NE {
                 insert(link);
                 insert(new_link);
             }else{
-                size_t size = nodes.size();
-                
                 if(rand32() & 1 || links_size == 0) {
                     size_t i = rand64() % size;
                     size_t j = input_size + (rand64() % (size - input_size));
@@ -254,7 +274,6 @@ namespace NE {
                 }
             }
         }
-        
     }
     
     Network::Network(const Network& network) : links(nullptr) {
@@ -272,6 +291,8 @@ namespace NE {
         output_size = network.output_size;
         
         fitness = network.fitness;
+        
+        age = network.age;
         
         size_t size = nodes.size();
         

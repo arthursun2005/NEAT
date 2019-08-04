@@ -54,6 +54,8 @@ namespace NE {
         void mutate(size_t);
         
         float fitness;
+        
+        size_t age;
 
     protected:
         
@@ -82,6 +84,21 @@ namespace NE {
     };
     
     inline bool network_sort (Network* A, Network* B) {
+        bool a = A->age < NECHILDHOOD;
+        bool b = B->age < NECHILDHOOD;
+        
+        if(a && b) {
+            return A->fitness < B->fitness;
+        }
+        
+        if(a) {
+            return false;
+        }
+        
+        if(b) {
+            return true;
+        }
+        
         return A->fitness < B->fitness;
     }
     
