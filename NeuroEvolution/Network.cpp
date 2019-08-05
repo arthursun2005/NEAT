@@ -15,19 +15,9 @@ namespace NE {
         node->value = node->function(node->value + node->bias);
     }
     
-    inline void insert_link(Link* A, Link* B) {
-        if(A->prev != nullptr) {
-            A->prev->next = B;
-        }
-        
-        B->next = A;
-        B->prev = A->prev;
-        A->prev = B;
-    }
-    
     void Network::reset(size_t inputs, size_t outputs) {
         nodes.resize(inputs + outputs);
-        clear();
+        links.clear();
         
         for(Node& node : nodes) {
             node.bias = gaussian_randomf();
@@ -42,82 +32,43 @@ namespace NE {
         next = -1;
         age = 0;
         
-        while(links_size < 1) {
+        while(links.size < 1) {
             mutate(0);
         }
     }
     
-    void Network::clear() {
-        while(links != nullptr) {
-            Link* link = links;
-            links = links->next;
-            delete link;
-        }
+    void Network::insert(list<Link>::type* link) {
+        list<Link>::type** A = &(nodes[link->data.j].begin);
         
-        links_size = 0;
+        *A = links.insert(*A, link);
+        
+        ++nodes[link->data.i].links;
+        ++nodes[link->data.j].links;
     }
     
-    void Network::insert(Link *link) {
-        Link** A = &(nodes[link->j].begin);
-        
-        if(links == nullptr) {
-            links = link;
-            links->prev = nullptr;
-            links->next = nullptr;
-        }else{
-            if((*A) == nullptr) {
-                insert_link(links, link);
-                links = link;
+    void Network::remove(list<Link>::type *ptr) {
+        if(nodes[ptr->data.j].begin == ptr) {
+            if(ptr->next != nullptr && ptr->next->data.j == ptr->data.j) {
+                nodes[ptr->data.j].begin = ptr->next;
             }else{
-                insert_link(*A, link);
-                
-                if(*A == links)
-                    links = link;
+                nodes[ptr->data.j].begin = nullptr;
             }
         }
         
-        *A = link;
+        links.remove(ptr);
         
-        ++nodes[link->i].links;
-        ++nodes[link->j].links;
-        
-        ++links_size;
-    }
-    
-    void Network::remove(Link *link) {
-        if(link->prev == nullptr) {
-            links = link->next;
-            if(links != nullptr)
-                links->prev = nullptr;
-        }else{
-            link->prev->next = link->next;
-            
-            if(link->next != nullptr)
-                link->next->prev = link->prev;
-        }
-        
-        if(nodes[link->j].begin == link) {
-            if(link->next != nullptr && link->next->j == link->j) {
-                nodes[link->j].begin = link->next;
-            }else{
-                nodes[link->j].begin = nullptr;
-            }
-        }
-        
-        --nodes[link->i].links;
-        --nodes[link->j].links;
+        --nodes[ptr->data.i].links;
+        --nodes[ptr->data.j].links;
         
         size_t io = input_size + output_size;
         
-        if(nodes[link->i].links == 0 && link->i >= io) {
-            next = link->i < next ? link->i : next;
+        if(nodes[ptr->data.i].links == 0 && ptr->data.i >= io) {
+            next = ptr->data.i < next ? ptr->data.i : next;
         }
         
-        if(nodes[link->j].links == 0 && link->j >= io) {
-            next = link->j < next ? link->j : next;
+        if(nodes[ptr->data.j].links == 0 && ptr->data.j >= io) {
+            next = ptr->data.j < next ? ptr->data.j : next;
         }
-        
-        --links_size;
     }
     
     void Network::compute() {
@@ -131,13 +82,13 @@ namespace NE {
             nodes[i].value = float_t(0);
         }
         
-        Link* link = links;
+        list<Link>::type* link = links.begin;
         Node* ns = nodes.data();
         while(link != nullptr) {
-            nodes[link->j].value += nodes[link->i].value * link->weight;
+            nodes[link->data.j].value += nodes[link->data.i].value * link->data.weight;
             
-            if(link->next == nullptr || link->next->j != link->j) {
-                compute_node(ns + link->j);
+            if(link->next == nullptr || link->next->data.j != link->data.j) {
+                compute_node(ns + link->data.j);
             }
 
             link = link->next;
@@ -153,12 +104,12 @@ namespace NE {
             size_t n = stack.top();
             stack.pop();
             
-            Link* link = nodes[n].begin;
-            while(link != nullptr && link->j == i) {
-                if(link->i == j)
+            list<Link>::type* link = nodes[n].begin;
+            while(link != nullptr && link->data.j == i) {
+                if(link->data.i == j)
                     return true;
                 
-                stack.push(link->i);
+                stack.push(link->data.i);
                 
                 link = link->next;
             }
@@ -168,9 +119,9 @@ namespace NE {
         return false;
     }
     
-    Link* Network::random_link() const {
-        size_t n = rand64() % links_size;
-        Link* link = links;
+    list<Link>::type* Network::random_link() const {
+        size_t n = rand64() % links.size;
+        list<Link>::type* link = links.begin;
         while(n-- > 0) link = link->next;
         return link;
     }
@@ -203,11 +154,11 @@ namespace NE {
         size_t size = nodes.size();
         
         {
-            size_t q = 1 + links_size;
+            size_t q = 1 + links.size;
             
-            Link* link = links;
+            list<Link>::type* link = links.begin;
             while(link != nullptr) {
-                if((rand64() % q) == 0) link->weight += randomf() * randposneg();
+                if((rand64() % q) == 0) link->data.weight += randomf() * randposneg();
                 link = link->next;
             }
             
@@ -219,45 +170,45 @@ namespace NE {
         uint32_t k = rand32() & 0xffff;
         
         if(k & 1) {
-            if(k <= 0x7fff && links_size != 0) {
-                Link* link = random_link();
+            if(k <= 0x7fff && links.size != 0) {
+                list<Link>::type* link = random_link();
                 size_t node = create_node();
                 
-                Link* new_link = new Link();
-                new_link->i = link->i;
-                new_link->j = node;
-                new_link->innovation = innovation;
-                new_link->weight = gaussian_randomf();
+                Link new_link;
+                new_link.i = link->data.i;
+                new_link.j = node;
+                new_link.innovation = innovation;
+                new_link.weight = gaussian_randomf();
                 
                 remove(link);
                 
-                link->i = node;
+                link->data.i = node;
                 
                 insert(link);
-                insert(new_link);
+                insert(new list<Link>::type(new_link));
             }else{
-                if(rand32() & 1 || links_size == 0) {
+                if(rand32() & 1 || links.size == 0) {
                     size_t i = rand64() % size;
                     size_t j = input_size + (rand64() % (size - input_size));
                     
-                    Link* link = nodes[j].begin;
-                    while(link != nullptr && link->j == j) {
-                        if(link->i == i)
+                    list<Link>::type* link = nodes[j].begin;
+                    while(link != nullptr && link->data.j == j) {
+                        if(link->data.i == i)
                             return;
                         
                         link = link->next;
                     }
                     
                     if(!has_node(i, j) && i != j) {
-                        Link* link = new Link();
-                        link->i = i;
-                        link->j = j;
-                        link->innovation = innovation;
-                        link->weight = gaussian_randomf();
-                        insert(link);
+                        Link link;
+                        link.i = i;
+                        link.j = j;
+                        link.innovation = innovation;
+                        link.weight = gaussian_randomf();
+                        insert(new list<Link>::type(link));
                     }
                 }else{
-                    Link* link = random_link();
+                    list<Link>::type* link = random_link();
                     remove(link);
                     delete link;
                 }
@@ -265,24 +216,24 @@ namespace NE {
         }else{
             size_t i = rand64() % nodes.size();
             nodes[i].function.randomlize();
-            Link* link = nodes[i].begin;
+            list<Link>::type* link = nodes[i].begin;
             
             if(nodes[i].links != 0) {
-                while(link != nullptr && link->j == i) {
-                    link->weight = gaussian_randomf();
+                while(link != nullptr && link->data.j == i) {
+                    link->data.weight = gaussian_randomf();
                     link = link->next;
                 }
             }
         }
     }
     
-    Network::Network(const Network& network) : links(nullptr) {
+    Network::Network(const Network& network) {
         reset(network.input_size, network.output_size);
         *this = network;
     }
     
     Network& Network::operator = (const Network &network) {
-        clear();
+        links.clear();
         
         nodes = network.nodes;
         next = network.next;
@@ -303,17 +254,15 @@ namespace NE {
         
         for(size_t i = 0; i < size; ++i) {
             if(network.nodes[i].begin != nullptr) {
-                Link* link = new Link();
-                *link = *network.nodes[i].begin;
-                insert(link);
+                insert(new list<Link>::type(network.nodes[i].begin->data));
             }
         }
         
-        Link* link = network.links;
+        list<Link>::type* link = network.links.begin;
         
         while(link != nullptr) {
-            if(network.nodes[link->j].begin != link) {
-                insert(new Link(*link));
+            if(network.nodes[link->data.j].begin != link) {
+                insert(new list<Link>::type(link->data));
             }
             link = link->next;
         }

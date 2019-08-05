@@ -22,6 +22,8 @@ int pop = 1024;
 
 int trials = 12;
 
+NE::list<int*> s;
+
 struct Obj
 {
     static const int input_size;

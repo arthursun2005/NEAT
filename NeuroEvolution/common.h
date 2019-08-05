@@ -13,8 +13,6 @@
 #include <functional>
 #include <random>
 
-#define NECHILDHOOD 64
-
 namespace NE {
     
     typedef float float_t;
@@ -48,6 +46,96 @@ namespace NE {
     inline float_t randposneg() {
         return rand32() <= (uint32_t(-1) >> 1) ? float_t(-1) : float_t(1);
     }
+    
+    template <class T>
+    struct list
+    {
+        struct type
+        {
+            T data;
+            type* prev;
+            type* next;
+            
+            type() {}
+            
+            type(const T& q) : data(q) {}
+        };
+        
+        type* begin;
+        size_t size;
+        
+        list() : begin(nullptr), size(0) {}
+        
+        list(const list<T>& l) : begin(nullptr), size(0) {
+            *this = l;
+        }
+        
+        list<T>& operator = (const list<T>& l) {
+            clear();
+            
+            type* q = l.begin;
+            
+            while(q != nullptr) {
+                insert(begin, q->data);
+                q = q->next;
+            }
+        }
+        
+        ~list() {
+            clear();
+        }
+        
+        void clear() {
+            while(begin != nullptr) {
+                type* A = begin;
+                begin = begin->next;
+                delete A;
+            }
+            
+            size = 0;
+        }
+        
+        type* insert(type* A, type* ptr) {
+            if(A == nullptr) A = begin;
+            
+            if(A == nullptr) {
+                begin = ptr;
+                begin->prev = nullptr;
+                begin->next = nullptr;
+            }else{
+                if(A->prev != nullptr) {
+                    A->prev->next = ptr;
+                }
+                
+                ptr->next = A;
+                ptr->prev = A->prev;
+                A->prev = ptr;
+                
+                if(A == begin)
+                    begin = ptr;
+            }
+            
+            ++size;
+            
+            return ptr;
+        }
+        
+        void remove(type* ptr) {
+            if(ptr->prev == nullptr) {
+                begin = ptr->next;
+                
+                if(begin != nullptr)
+                    begin->prev = nullptr;
+            }else{
+                ptr->prev->next = ptr->next;
+                
+                if(ptr->next != nullptr)
+                    ptr->next->prev = ptr->prev;
+            }
+            
+            --size;
+        }
+    };
     
     enum function_types
     {

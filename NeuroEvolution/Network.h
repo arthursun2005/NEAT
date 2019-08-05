@@ -19,11 +19,7 @@ namespace NE {
         
     public:
         
-        Network() : links(nullptr) {}
-        
-        ~Network() {
-            clear();
-        }
+        Network() {}
         
         Network(const Network& network);
         
@@ -42,14 +38,12 @@ namespace NE {
         }
         
         inline size_t complexity() const {
-            return links_size;
+            return links.size;
         }
         
         void reset(size_t inputs, size_t outputs);
         
         void compute();
-        
-        void clear();
         
         void mutate(size_t);
         
@@ -58,14 +52,14 @@ namespace NE {
         size_t age;
 
     protected:
+                
+        void insert(list<Link>::type* link);
         
-        void insert(Link* link);
-        
-        void remove(Link* link);
+        void remove(list<Link>::type* link);
         
         size_t create_node();
         
-        Link* random_link() const;
+        list<Link>::type* random_link() const;
         
         bool has_node(size_t i, size_t j) const;
         
@@ -75,30 +69,13 @@ namespace NE {
         void resize();
         
         std::vector<Node> nodes;
-        Link* links;
-        
-        size_t links_size;
+        list<Link> links;
         
         size_t next;
 
     };
     
     inline bool network_sort (Network* A, Network* B) {
-        bool a = A->age < NECHILDHOOD;
-        bool b = B->age < NECHILDHOOD;
-        
-        if(a && b) {
-            return A->fitness < B->fitness;
-        }
-        
-        if(a) {
-            return false;
-        }
-        
-        if(b) {
-            return true;
-        }
-        
         return A->fitness < B->fitness;
     }
     

@@ -10,11 +10,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/Network.cpp"
-            timestampString = "586600793.410992"
+            timestampString = "586690502.952927"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "29"
-            endingLineNumber = "29"
+            startingLineNumber = "19"
+            endingLineNumber = "19"
             landmarkName = "Network::reset(size_t inputs, size_t outputs)"
             landmarkType = "7">
          </BreakpointContent>
@@ -26,11 +26,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/Network.cpp"
-            timestampString = "586600793.41114"
+            timestampString = "586690502.953271"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "314"
-            endingLineNumber = "314"
+            startingLineNumber = "263"
+            endingLineNumber = "263"
             landmarkName = "Network::operator = (const Network &amp;network)"
             landmarkType = "7">
          </BreakpointContent>
@@ -42,11 +42,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/Population.h"
-            timestampString = "586600793.411266"
+            timestampString = "586690502.953433"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "54"
-            endingLineNumber = "54"
+            startingLineNumber = "55"
+            endingLineNumber = "55"
             landmarkName = "step()"
             landmarkType = "7">
          </BreakpointContent>
@@ -58,11 +58,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/Network.cpp"
-            timestampString = "586600793.411916"
+            timestampString = "586690502.9537359"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "223"
-            endingLineNumber = "223"
+            startingLineNumber = "174"
+            endingLineNumber = "174"
             landmarkName = "Network::mutate(size_t innovation)"
             landmarkType = "7">
          </BreakpointContent>
@@ -74,11 +74,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/Network.cpp"
-            timestampString = "586600793.412039"
+            timestampString = "586690502.953899"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "240"
-            endingLineNumber = "240"
+            startingLineNumber = "191"
+            endingLineNumber = "191"
             landmarkName = "Network::mutate(size_t innovation)"
             landmarkType = "7">
          </BreakpointContent>
@@ -90,11 +90,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/Network.cpp"
-            timestampString = "586600793.412155"
+            timestampString = "586690502.954049"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "260"
-            endingLineNumber = "260"
+            startingLineNumber = "211"
+            endingLineNumber = "211"
             landmarkName = "Network::mutate(size_t innovation)"
             landmarkType = "7">
          </BreakpointContent>
@@ -106,12 +106,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/Network.cpp"
-            timestampString = "586600793.4122699"
+            timestampString = "586690502.954195"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "266"
-            endingLineNumber = "266"
-            landmarkName = "Network::mutate(size_t innovation)"
+            startingLineNumber = "38"
+            endingLineNumber = "38"
+            landmarkName = "Network::reset(size_t inputs, size_t outputs)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -122,12 +122,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/Network.cpp"
-            timestampString = "586600793.412382"
+            timestampString = "586690502.9543411"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "64"
-            endingLineNumber = "64"
-            landmarkName = "Network::insert(Link *link)"
+            startingLineNumber = "49"
+            endingLineNumber = "49"
+            landmarkName = "Network::remove(list&lt;Link&gt;::type *ptr)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -138,27 +138,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/Network.cpp"
-            timestampString = "586600793.4124939"
+            timestampString = "586690502.9544851"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "88"
-            endingLineNumber = "88"
-            landmarkName = "Network::remove(Link *link)"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "NeuroEvolution/Network.cpp"
-            timestampString = "586600793.412604"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "287"
-            endingLineNumber = "287"
+            startingLineNumber = "238"
+            endingLineNumber = "238"
             landmarkName = "Network::operator = (const Network &amp;network)"
             landmarkType = "7">
          </BreakpointContent>
@@ -170,11 +154,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/Network.cpp"
-            timestampString = "586600793.41272"
+            timestampString = "586690502.954623"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "172"
-            endingLineNumber = "172"
+            startingLineNumber = "127"
+            endingLineNumber = "127"
             landmarkName = "Network::random_link()"
             landmarkType = "7">
          </BreakpointContent>
@@ -186,11 +170,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/Network.cpp"
-            timestampString = "586600793.41283"
+            timestampString = "586690502.954753"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "305"
-            endingLineNumber = "305"
+            startingLineNumber = "256"
+            endingLineNumber = "256"
             landmarkName = "Network::operator = (const Network &amp;network)"
             landmarkType = "7">
          </BreakpointContent>
@@ -202,11 +186,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/Network.cpp"
-            timestampString = "586600793.412936"
+            timestampString = "586690502.9548759"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "306"
-            endingLineNumber = "306"
+            startingLineNumber = "256"
+            endingLineNumber = "256"
             landmarkName = "Network::operator = (const Network &amp;network)"
             landmarkType = "7">
          </BreakpointContent>
@@ -218,27 +202,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/Network.cpp"
-            timestampString = "586600793.413035"
+            timestampString = "586690502.954999"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "61"
-            endingLineNumber = "61"
-            landmarkName = "Network::insert(Link *link)"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "NeuroEvolution/Network.cpp"
-            timestampString = "586600793.413129"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "296"
-            endingLineNumber = "296"
+            startingLineNumber = "247"
+            endingLineNumber = "247"
             landmarkName = "Network::operator = (const Network &amp;network)"
             landmarkType = "7">
          </BreakpointContent>
@@ -250,12 +218,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/Network.cpp"
-            timestampString = "586600793.413221"
+            timestampString = "586690502.9551229"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "68"
-            endingLineNumber = "68"
-            landmarkName = "Network::insert(Link *link)"
+            startingLineNumber = "38"
+            endingLineNumber = "38"
+            landmarkName = "Network::reset(size_t inputs, size_t outputs)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -266,12 +234,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/Network.cpp"
-            timestampString = "586600793.413313"
+            timestampString = "586690502.955247"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "69"
-            endingLineNumber = "69"
-            landmarkName = "Network::insert(Link *link)"
+            startingLineNumber = "38"
+            endingLineNumber = "38"
+            landmarkName = "Network::reset(size_t inputs, size_t outputs)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -282,11 +250,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/Network.cpp"
-            timestampString = "586600793.413401"
+            timestampString = "586690502.9553649"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "187"
-            endingLineNumber = "187"
+            startingLineNumber = "138"
+            endingLineNumber = "138"
             landmarkName = "Network::create_node()"
             landmarkType = "7">
          </BreakpointContent>
@@ -298,11 +266,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/Network.cpp"
-            timestampString = "586600793.413486"
+            timestampString = "586690502.955485"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "183"
-            endingLineNumber = "183"
+            startingLineNumber = "134"
+            endingLineNumber = "134"
             landmarkName = "Network::create_node()"
             landmarkType = "7">
          </BreakpointContent>
@@ -314,28 +282,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/Network.cpp"
-            timestampString = "586600793.413571"
+            timestampString = "586690502.955598"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "245"
-            endingLineNumber = "245"
-            landmarkName = "Network::mutate(size_t innovation)"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "NeuroEvolution/Network.cpp"
-            timestampString = "586600793.413654"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "72"
-            endingLineNumber = "72"
-            landmarkName = "Network::insert(Link *link)"
+            startingLineNumber = "38"
+            endingLineNumber = "38"
+            landmarkName = "Network::reset(size_t inputs, size_t outputs)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

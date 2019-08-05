@@ -20,9 +20,6 @@ namespace NE {
         float_t weight;
         
         size_t innovation;
-        
-        Link* prev;
-        Link* next;
     };
     
     struct Node
@@ -33,7 +30,7 @@ namespace NE {
         
         Function function;
         
-        Link* begin;
+        list<Link>::type* begin;
     };
     
 }

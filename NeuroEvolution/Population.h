@@ -10,6 +10,7 @@
 #define Population_h
 
 #include "Network.h"
+#include "Species.h"
 
 namespace NE {
     
@@ -63,7 +64,7 @@ namespace NE {
             }
             
             for(size_t i = 0; i < size; ++i) {
-                //++networks[i]->age;
+                ++networks[i]->age;
             }
 
             return networks.back();
@@ -73,6 +74,7 @@ namespace NE {
         
         size_t innovation;
         std::vector<Network*> networks;
+        std::vector<Species> species;
         
     };
     
