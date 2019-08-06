@@ -17,14 +17,11 @@ namespace NE {
 
     struct Innov
     {
-        size_t i;
-        size_t j;
+        const Link* link;
         
         Innov() {}
         
-        Innov(size_t i, size_t j) : i(i), j(j) {}
-        
-        Innov(const Link& l) : i(l.i), j(l.j) {}
+        Innov(const Link* link) : link(link) {}
     };
     
     typedef std::unordered_map<Innov, size_t> innov_map;
@@ -35,7 +32,7 @@ template <>
 struct std::hash<NE::Innov>
 {
     inline size_t operator () (const NE::Innov& x) const {
-        return x.i ^ x.j;
+        return x.link->i ^ x.link->j;
     }
 };
 
@@ -43,7 +40,7 @@ template <>
 struct std::equal_to<NE::Innov>
 {
     inline bool operator () (const NE::Innov& a, const NE::Innov& b) const {
-        return a.i == b.i && a.j == b.j;
+        return a.link->i == b.link->i && a.link->j == b.link->j;
     }
 };
 
@@ -80,11 +77,17 @@ namespace NE {
         
         void compute();
         
+        void clear();
+        
         void mutate(innov_map* map, size_t* innov);
         
         float fitness;
         
         size_t age;
+        
+        static void crossover(Network* A, Network* B, Network* C);
+        
+        static float closeness(Network* A, Network* B);
 
     protected:
                 
@@ -106,6 +109,7 @@ namespace NE {
         std::vector<Node> nodes;
         
         std::list<Link*> links;
+        std::list<Link*> innovs;
         
         size_t next;
 

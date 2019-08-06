@@ -15,13 +15,18 @@ namespace NE {
         node->value = node->function(node->value);
     }
     
-    void Network::reset(size_t inputs, size_t outputs) {
-        nodes.resize(inputs + outputs);
-        
+    void Network::clear() {
         for(Link* link : links)
             delete link;
         
         links.clear();
+        innovs.clear();
+    }
+    
+    void Network::reset(size_t inputs, size_t outputs) {
+        nodes.resize(inputs + outputs);
+        
+        clear();
         
         for(Node& node : nodes) {
             node.function.randomlize();
@@ -39,7 +44,22 @@ namespace NE {
     void Network::insert(Link* link) {
         std::list<Link*>::iterator* A = &(nodes[link->j].begin);
         
-        links.insert(*A, link);
+        *A = links.insert(*A, link);
+        
+        std::list<Link*>::iterator q = innovs.end(), p;
+        
+        while(q != innovs.begin()) {
+            p = q;
+            --p;
+            
+            if(link->innovation > (*p)->innovation) {
+                break;
+            }
+            
+            --q;
+        }
+        
+        link->innov_it = innovs.insert(q, link);
         
         ++nodes[link->i].links;
         ++nodes[link->j].links;
@@ -48,6 +68,7 @@ namespace NE {
     void Network::remove(std::list<Link*>::iterator link) {
         std::list<Link*>::iterator q = link;
         ++q;
+        
         if(nodes[(*link)->j].begin == link) {
             if(q != links.end() && (*q)->j == (*link)->j) {
                 nodes[(*link)->j].begin = q;
@@ -69,6 +90,7 @@ namespace NE {
             next = (*link)->j < next ? (*link)->j : next;
         }
         
+        innovs.erase((*link)->innov_it);
         links.erase(link);
     }
     
@@ -175,27 +197,28 @@ namespace NE {
                 std::list<Link*>::iterator link = random_link();
                 size_t node = create_node();
                 
-                Link new_link;
-                new_link.i = (*link)->i;
-                new_link.j = node;
+                Link* new_link = new Link();
+                new_link->i = (*link)->i;
+                new_link->j = node;
                 
                 auto it = map->find(Innov(new_link));
                 
                 if(it != map->end()) {
-                    new_link.innovation = it->second;
+                    new_link->innovation = it->second;
                 }else{
-                    new_link.innovation = *innov;
-                    (*innov)++;
+                    new_link->innovation = *innov;
+                    map->insert({Innov(new_link), new_link->innovation});
+                    ++(*innov);
                 }
                 
-                new_link.weight = gaussian_random();
+                new_link->weight = gaussian_random();
                 
                 remove(link);
                 
                 (*link)->i = node;
                 
                 insert(*link);
-                insert(new Link(new_link));
+                insert(new_link);
             }else{
                 if(rand32() & 1 || ls == 0) {
                     size_t i = rand64() % size;
@@ -210,21 +233,22 @@ namespace NE {
                     }
                     
                     if(!has_node(i, j) && i != j) {
-                        Link link;
-                        link.i = i;
-                        link.j = j;
+                        Link* link = new Link();
+                        link->i = i;
+                        link->j = j;
                         
                         auto it = map->find(Innov(link));
                         
                         if(it != map->end()) {
-                            link.innovation = it->second;
+                            link->innovation = it->second;
                         }else{
-                            link.innovation = *innov;
-                            (*innov)++;
+                            link->innovation = *innov;
+                            map->insert({Innov(link), link->innovation});
+                            ++(*innov);
                         }
                         
-                        link.weight = gaussian_random();
-                        insert(new Link(link));
+                        link->weight = gaussian_random();
+                        insert(link);
                     }
                 }else{
                     std::list<Link*>::iterator link = random_link();
@@ -252,16 +276,10 @@ namespace NE {
     }
     
     Network& Network::operator = (const Network &network) {
-        for(Link* link : links)
-            delete link;
-        
-        links.clear();
+        reset(network.input_size, network.output_size);
         
         nodes = network.nodes;
         next = network.next;
-        
-        input_size = network.input_size;
-        output_size = network.output_size;
         
         fitness = network.fitness;
         
@@ -274,22 +292,63 @@ namespace NE {
             nodes[i].begin = links.end();
         }
         
-        for(size_t i = 0; i < size; ++i) {
-            if(network.nodes[i].begin != network.links.end()) {
-                insert(new Link(**network.nodes[i].begin));
-            }
-        }
-        
         std::list<Link*>::const_iterator link = network.links.begin();
         
         while(link != network.links.end()) {
-            if(network.nodes[(*link)->j].begin != link) {
-                insert(new Link(**link));
-            }
+            insert(new Link(**link));
             ++link;
         }
         
         return *this;
+    }
+    
+    void Network::crossover(Network* A, Network* B, Network* C) {
+        C->reset(A->input_size, B->output_size);
+        
+        size_t size = std::max(A->nodes.size(), B->nodes.size());
+        
+        C->nodes.resize(size);
+        
+        for(size_t i = 0; i < size; ++i) {
+            C->nodes[i].links = 0;
+            C->nodes[i].begin = C->links.end();
+        }
+        
+        C->fitness = (A->fitness + B->fitness) * 0.5f;
+        
+        std::list<Link*>::iterator itA, itB;
+        
+        itA = A->innovs.begin();
+        itB = B->innovs.begin();
+        
+        while(itA != A->innovs.end() || itB != B->innovs.end()) {
+            if(itA == A->innovs.end()) {
+                C->insert(new Link(**itB));
+                ++itB;
+                continue;
+            }
+            
+            if(itB == B->innovs.end()) {
+                C->insert(new Link(**itA));
+                ++itA;
+                continue;
+            }
+            
+            if((*itA)->innovation == (*itB)->innovation) {
+                Link* link = new Link(**itA);
+                link->weight = ((*itA)->weight + (*itB)->weight) * 0.5f;
+                C->insert(link);
+                
+                ++itA;
+                ++itB;
+            }else if((*itA)->innovation < (*itB)->innovation) {
+                C->insert(new Link(**itA));
+                ++itA;
+            }else{
+                C->insert(new Link(**itB));
+                ++itB;
+            }
+        }
     }
     
 }

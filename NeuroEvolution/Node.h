@@ -21,6 +21,15 @@ namespace NE {
         float_t weight;
         
         size_t innovation;
+        
+        std::list<Link*>::iterator innov_it;
+    };
+    
+    struct LinkByInnov
+    {
+        inline bool operator () (Link* A, Link* B) const {
+            return A->innovation < B->innovation;
+        }
     };
     
     struct Node

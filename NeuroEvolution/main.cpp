@@ -20,7 +20,7 @@ FILE* log_file;
 int gens = 100;
 int pop = 1024;
 
-int print_every = 30;
+int print_every = 32;
 
 int trials = 8;
 
