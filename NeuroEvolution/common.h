@@ -16,7 +16,7 @@
 namespace NE {
     
     typedef float float_t;
-    
+        
     inline uint32_t rand32() {
         return arc4random();
     }

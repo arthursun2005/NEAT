@@ -17,7 +17,7 @@ NE::Population population;
 
 FILE* log_file;
 
-int gens = 100;
+int gens = 128;
 int pop = 1024;
 
 int print_every = 32;

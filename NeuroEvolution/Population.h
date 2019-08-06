@@ -58,14 +58,10 @@ namespace NE {
             innov_map map;
             
             for(size_t i = 0; i < half_size; ++i) {
-                if(rand32() & 1) {
-                    *(networks[i]) = *(networks[size - i - 1]);
-                }else{
-                    size_t i1 = size - 1 - random() * (half_size - 1);
-                    size_t i2 = size - 1 - random() * (half_size - 1);
-                    
-                    Network::crossover(networks[i1], networks[i2], networks[i]);
-                }
+                size_t i1 = size - 1 - random() * (half_size - 1);
+                size_t i2 = size - 1 - random() * (half_size - 1);
+
+                Network::crossover(networks[i1], networks[i2], networks[i]);
                 
                 if(rand32() & 1) {
                     networks[i]->mutate(&map, &innovation);
