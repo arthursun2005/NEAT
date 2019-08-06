@@ -57,10 +57,14 @@ namespace NE {
             
             std::sort(networks.data(), networks.data() + size, network_sort);
             
+            innov_map map;
+            
             for(size_t i = 0; i < half_size; ++i) {
                 *(networks[i]) = *(networks[size - i - 1]);
-                networks[i]->mutate(innovation);
-                networks[i]->age = 0;
+                if(rand32() & 1) {
+                    networks[i]->mutate(&map, &innovation);
+                    networks[i]->age = 0;
+                }
             }
             
             for(size_t i = 0; i < size; ++i) {

@@ -33,21 +33,21 @@ namespace NE {
         ::operator delete(ptr);
     }
     
-    inline float_t gaussian_randomf() {
+    inline float_t gaussian_random() {
         thread_local std::default_random_engine g;
         thread_local std::normal_distribution<float_t> d(0.0, 1.0);
         return d(g);
     }
     
-    inline float_t randomf() {
-        return rand32() / (float_t) (uint32_t(-1));
+    inline float random() {
+        return rand32() / (float) (0xffffffff);
     }
     
-    inline float_t randposneg() {
-        return rand32() <= (uint32_t(-1) >> 1) ? float_t(-1) : float_t(1);
+    inline float randposneg() {
+        return rand32() <= 0x7fffffff ? -1.0 : 1.0;
     }
     
-    template <class T>
+    template <class T, bool clean_up = true>
     struct list
     {
         struct type
@@ -82,7 +82,7 @@ namespace NE {
         }
         
         ~list() {
-            clear();
+            if(clean_up) clear();
         }
         
         void clear() {

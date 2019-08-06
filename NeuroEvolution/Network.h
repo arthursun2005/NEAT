@@ -11,6 +11,41 @@
 
 #include "Node.h"
 #include <vector>
+#include <unordered_map>
+
+namespace NE {
+
+    struct Innov
+    {
+        size_t i;
+        size_t j;
+        
+        Innov() {}
+        
+        Innov(size_t i, size_t j) : i(i), j(j) {}
+        
+        Innov(const Link& l) : i(l.i), j(l.j) {}
+    };
+    
+    typedef std::unordered_map<Innov, size_t> innov_map;
+    
+}
+
+template <>
+struct std::hash<NE::Innov>
+{
+    inline size_t operator () (const NE::Innov& x) const {
+        return x.i ^ x.j;
+    }
+};
+
+template <>
+struct std::equal_to<NE::Innov>
+{
+    inline bool operator () (const NE::Innov& a, const NE::Innov& b) const {
+        return a.i == b.i && a.j == b.j;
+    }
+};
 
 namespace NE {
 
@@ -45,7 +80,7 @@ namespace NE {
         
         void compute();
         
-        void mutate(size_t);
+        void mutate(innov_map* map, size_t* innov);
         
         float fitness;
         
@@ -69,6 +104,7 @@ namespace NE {
         void resize();
         
         std::vector<Node> nodes;
+        
         list<Link> links;
         
         size_t next;

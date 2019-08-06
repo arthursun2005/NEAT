@@ -72,12 +72,12 @@ struct Pendulum : public Obj
     void reset() {
         float stdev = 0.1f;
         
-        x = NE::gaussian_randomf() * stdev;
-        vx = NE::gaussian_randomf() * stdev;
-        a = NE::gaussian_randomf() * stdev + M_PI;
-        va = NE::gaussian_randomf() * stdev;
+        x = NE::gaussian_random() * stdev;
+        vx = NE::gaussian_random() * stdev;
+        a = NE::gaussian_random() * stdev + M_PI;
+        va = NE::gaussian_random() * stdev;
         
-        x = (NE::randomf() - 0.5f) * 2.0f * 0.75f * xt;
+        x = (NE::random() - 0.5f) * 2.0f * 0.75f * xt;
     }
     
     void step(float dt) {
@@ -88,7 +88,7 @@ struct Pendulum : public Obj
         float_t s = sinf(a);
         
         inputs[0].value = vx;
-        inputs[1].value = x;
+        inputs[1].value = x / xt;
         inputs[2].value = va;
         inputs[3].value = c;
         inputs[4].value = s;
@@ -191,9 +191,17 @@ int main(int argc, const char * argv[]) {
             objs[i].net->fitness = objs[i].reward;
         }
         
+        fprintf(log_file, "\n\n\n");
+        
+        fprintf(log_file, "Generation %d: \n", n);
+        
+        for(int i = 0; i < pop; ++i) {
+            fprintf(log_file, "%5d #%5d: age %5zu fit %8.2f complexity %5zu size %5zu \n", n, i, population[i]->age, population[i]->fitness, population[i]->complexity(), population[i]->size());
+        }
+        
         best = population.step();
         
-        fprintf(log_file, "%15.4f %8zu %8zu \n", best->fitness, best->size(), best->complexity());
+        fprintf(log_file, "best fit %15.4f size %8zu complexity %8zu \n", best->fitness, best->size(), best->complexity());
         
         fflush(log_file);
     }

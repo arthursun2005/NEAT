@@ -12,7 +12,7 @@
 namespace NE {
     
     inline void compute_node(Node* node) {
-        node->value = node->function(node->value + node->bias);
+        node->value = node->function(node->value);
     }
     
     void Network::reset(size_t inputs, size_t outputs) {
@@ -20,7 +20,6 @@ namespace NE {
         links.clear();
         
         for(Node& node : nodes) {
-            node.bias = gaussian_randomf();
             node.function.randomlize();
             node.links = 0;
             node.begin = nullptr;
@@ -31,10 +30,6 @@ namespace NE {
         
         next = -1;
         age = 0;
-        
-        while(links.size < 1) {
-            mutate(0);
-        }
     }
     
     void Network::insert(list<Link>::type* link) {
@@ -129,7 +124,6 @@ namespace NE {
     size_t Network::create_node() {
         Node node;
         node.begin = nullptr;
-        node.bias = gaussian_randomf();
         node.links = 0;
         
         size_t i = nodes.size();
@@ -150,7 +144,7 @@ namespace NE {
         return i;
     }
     
-    void Network::mutate(size_t innovation) {
+    void Network::mutate(innov_map *map, size_t *innov) {
         size_t size = nodes.size();
         
         {
@@ -158,12 +152,8 @@ namespace NE {
             
             list<Link>::type* link = links.begin;
             while(link != nullptr) {
-                if((rand64() % q) == 0) link->data.weight += randomf() * randposneg();
+                if((rand64() % q) == 0) link->data.weight += random() * randposneg();
                 link = link->next;
-            }
-            
-            for(Node& node : nodes) {
-                if((rand64() % q) == 0) node.bias += randomf() * randposneg();
             }
         }
         
@@ -177,8 +167,17 @@ namespace NE {
                 Link new_link;
                 new_link.i = link->data.i;
                 new_link.j = node;
-                new_link.innovation = innovation;
-                new_link.weight = gaussian_randomf();
+                
+                auto it = map->find(Innov(new_link));
+                
+                if(it != map->end()) {
+                    new_link.innovation = it->second;
+                }else{
+                    new_link.innovation = *innov;
+                    (*innov)++;
+                }
+                
+                new_link.weight = gaussian_random();
                 
                 remove(link);
                 
@@ -203,8 +202,17 @@ namespace NE {
                         Link link;
                         link.i = i;
                         link.j = j;
-                        link.innovation = innovation;
-                        link.weight = gaussian_randomf();
+                        
+                        auto it = map->find(Innov(link));
+                        
+                        if(it != map->end()) {
+                            link.innovation = it->second;
+                        }else{
+                            link.innovation = *innov;
+                            (*innov)++;
+                        }
+                        
+                        link.weight = gaussian_random();
                         insert(new list<Link>::type(link));
                     }
                 }else{
@@ -220,7 +228,7 @@ namespace NE {
             
             if(nodes[i].links != 0) {
                 while(link != nullptr && link->data.j == i) {
-                    link->data.weight = gaussian_randomf();
+                    link->data.weight = gaussian_random();
                     link = link->next;
                 }
             }

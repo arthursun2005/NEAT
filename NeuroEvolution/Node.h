@@ -25,7 +25,6 @@ namespace NE {
     struct Node
     {
         float_t value;
-        float_t bias;
         size_t links;
         
         Function function;
