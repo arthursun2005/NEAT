@@ -17,8 +17,10 @@ NE::Population population;
 
 FILE* log_file;
 
-int gens = 512;
+int gens = 256;
 int pop = 1024;
+
+int print_every = 16;
 
 int trials = 12;
 
@@ -174,7 +176,9 @@ int main(int argc, const char * argv[]) {
     
     NE::Network* best;
     
-    fprintf(log_file, "Population: %d \n", pop);
+    fprintf(log_file, "Population: %d \n \n ", pop);
+    
+    fprintf(log_file, "generation index age fitness complexity size\n");
     
     fflush(log_file);
     
@@ -195,13 +199,17 @@ int main(int argc, const char * argv[]) {
         
         fprintf(log_file, "Generation %d: \n", n);
         
-        for(int i = 0; i < pop; ++i) {
-            fprintf(log_file, "%5d #%5d: age %5zu fit %8.2f complexity %5zu size %5zu \n", n, i, population[i]->age, population[i]->fitness, population[i]->complexity(), population[i]->size());
+        if((n%print_every) == 0) {
+        
+            for(int i = 0; i < pop; ++i) {
+                fprintf(log_file, "%5d # %5d: %5zu %8.2f %5zu %5zu \n", n, i, population[i]->age, population[i]->fitness, population[i]->complexity(), population[i]->size());
+            }
+            
         }
         
         best = population.step();
         
-        fprintf(log_file, "best fit %15.4f size %8zu complexity %8zu \n", best->fitness, best->size(), best->complexity());
+        fprintf(log_file, "best fitness %15.4f size %8zu complexity %8zu \n", best->fitness, best->size(), best->complexity());
         
         fflush(log_file);
     }
