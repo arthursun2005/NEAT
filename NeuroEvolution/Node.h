@@ -10,6 +10,7 @@
 #define Node_h
 
 #include "common.h"
+#include <list>
 
 namespace NE {
     
@@ -29,7 +30,7 @@ namespace NE {
         
         Function function;
         
-        list<Link>::type* begin;
+        std::list<Link*>::iterator begin;
     };
     
 }

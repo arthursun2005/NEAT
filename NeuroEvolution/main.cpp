@@ -17,14 +17,12 @@ NE::Population population;
 
 FILE* log_file;
 
-int gens = 256;
+int gens = 100;
 int pop = 1024;
 
-int print_every = 16;
+int print_every = 30;
 
-int trials = 12;
-
-NE::list<int*> s;
+int trials = 8;
 
 struct Obj
 {

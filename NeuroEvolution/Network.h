@@ -73,7 +73,7 @@ namespace NE {
         }
         
         inline size_t complexity() const {
-            return links.size;
+            return links.size();
         }
         
         void reset(size_t inputs, size_t outputs);
@@ -88,13 +88,13 @@ namespace NE {
 
     protected:
                 
-        void insert(list<Link>::type* link);
+        void insert(Link* link);
         
-        void remove(list<Link>::type* link);
+        void remove(std::list<Link*>::iterator link);
         
         size_t create_node();
         
-        list<Link>::type* random_link() const;
+        std::list<Link*>::iterator random_link();
         
         bool has_node(size_t i, size_t j) const;
         
@@ -105,7 +105,7 @@ namespace NE {
         
         std::vector<Node> nodes;
         
-        list<Link> links;
+        std::list<Link*> links;
         
         size_t next;
 

@@ -17,12 +17,16 @@ namespace NE {
     
     void Network::reset(size_t inputs, size_t outputs) {
         nodes.resize(inputs + outputs);
+        
+        for(Link* link : links)
+            delete link;
+        
         links.clear();
         
         for(Node& node : nodes) {
             node.function.randomlize();
             node.links = 0;
-            node.begin = nullptr;
+            node.begin = links.end();
         }
         
         input_size = inputs;
@@ -32,38 +36,40 @@ namespace NE {
         age = 0;
     }
     
-    void Network::insert(list<Link>::type* link) {
-        list<Link>::type** A = &(nodes[link->data.j].begin);
+    void Network::insert(Link* link) {
+        std::list<Link*>::iterator* A = &(nodes[link->j].begin);
         
-        *A = links.insert(*A, link);
+        links.insert(*A, link);
         
-        ++nodes[link->data.i].links;
-        ++nodes[link->data.j].links;
+        ++nodes[link->i].links;
+        ++nodes[link->j].links;
     }
     
-    void Network::remove(list<Link>::type *ptr) {
-        if(nodes[ptr->data.j].begin == ptr) {
-            if(ptr->next != nullptr && ptr->next->data.j == ptr->data.j) {
-                nodes[ptr->data.j].begin = ptr->next;
+    void Network::remove(std::list<Link*>::iterator link) {
+        std::list<Link*>::iterator q = link;
+        ++q;
+        if(nodes[(*link)->j].begin == link) {
+            if(q != links.end() && (*q)->j == (*link)->j) {
+                nodes[(*link)->j].begin = q;
             }else{
-                nodes[ptr->data.j].begin = nullptr;
+                nodes[(*link)->j].begin = links.end();
             }
         }
         
-        links.remove(ptr);
-        
-        --nodes[ptr->data.i].links;
-        --nodes[ptr->data.j].links;
+        --nodes[(*link)->i].links;
+        --nodes[(*link)->j].links;
         
         size_t io = input_size + output_size;
         
-        if(nodes[ptr->data.i].links == 0 && ptr->data.i >= io) {
-            next = ptr->data.i < next ? ptr->data.i : next;
+        if(nodes[(*link)->i].links == 0 && (*link)->i >= io) {
+            next = (*link)->i < next ? (*link)->i : next;
         }
         
-        if(nodes[ptr->data.j].links == 0 && ptr->data.j >= io) {
-            next = ptr->data.j < next ? ptr->data.j : next;
+        if(nodes[(*link)->j].links == 0 && (*link)->j >= io) {
+            next = (*link)->j < next ? (*link)->j : next;
         }
+        
+        links.erase(link);
     }
     
     void Network::compute() {
@@ -77,16 +83,19 @@ namespace NE {
             nodes[i].value = float_t(0);
         }
         
-        list<Link>::type* link = links.begin;
+        std::list<Link*>::iterator link = links.begin();
         Node* ns = nodes.data();
-        while(link != nullptr) {
-            nodes[link->data.j].value += nodes[link->data.i].value * link->data.weight;
+        while(link != links.end()) {
+            nodes[(*link)->j].value += nodes[(*link)->i].value * (*link)->weight;
             
-            if(link->next == nullptr || link->next->data.j != link->data.j) {
-                compute_node(ns + link->data.j);
+            std::list<Link*>::iterator q = link;
+            ++q;
+            
+            if(q == links.end() || (*q)->j != (*link)->j) {
+                compute_node(ns + (*link)->j);
             }
 
-            link = link->next;
+            ++link;
         }
     }
     
@@ -99,14 +108,14 @@ namespace NE {
             size_t n = stack.top();
             stack.pop();
             
-            list<Link>::type* link = nodes[n].begin;
-            while(link != nullptr && link->data.j == i) {
-                if(link->data.i == j)
+            std::list<Link*>::iterator link = nodes[n].begin;
+            while(link != links.end() && (*link)->j == i) {
+                if((*link)->i == j)
                     return true;
                 
-                stack.push(link->data.i);
+                stack.push((*link)->i);
                 
-                link = link->next;
+                ++link;
             }
             
         }
@@ -114,16 +123,16 @@ namespace NE {
         return false;
     }
     
-    list<Link>::type* Network::random_link() const {
-        size_t n = rand64() % links.size;
-        list<Link>::type* link = links.begin;
-        while(n-- > 0) link = link->next;
+    std::list<Link*>::iterator Network::random_link() {
+        size_t n = rand64() % links.size();
+        std::list<Link*>::iterator link = links.begin();
+        while(n-- > 0) ++link;
         return link;
     }
     
     size_t Network::create_node() {
         Node node;
-        node.begin = nullptr;
+        node.begin = links.end();
         node.links = 0;
         
         size_t i = nodes.size();
@@ -148,24 +157,26 @@ namespace NE {
         size_t size = nodes.size();
         
         {
-            size_t q = 1 + links.size;
+            size_t q = 1 + links.size();
             
-            list<Link>::type* link = links.begin;
-            while(link != nullptr) {
-                if((rand64() % q) == 0) link->data.weight += random() * randposneg();
-                link = link->next;
+            std::list<Link*>::iterator link = links.begin();
+            while(link != links.end()) {
+                if((rand64() % q) == 0) (*link)->weight += random() * randposneg();
+                ++link;
             }
         }
         
         uint32_t k = rand32() & 0xffff;
         
+        size_t ls = links.size();
+        
         if(k & 1) {
-            if(k <= 0x7fff && links.size != 0) {
-                list<Link>::type* link = random_link();
+            if(k <= 0x7fff && ls != 0) {
+                std::list<Link*>::iterator link = random_link();
                 size_t node = create_node();
                 
                 Link new_link;
-                new_link.i = link->data.i;
+                new_link.i = (*link)->i;
                 new_link.j = node;
                 
                 auto it = map->find(Innov(new_link));
@@ -181,21 +192,21 @@ namespace NE {
                 
                 remove(link);
                 
-                link->data.i = node;
+                (*link)->i = node;
                 
-                insert(link);
-                insert(new list<Link>::type(new_link));
+                insert(*link);
+                insert(new Link(new_link));
             }else{
-                if(rand32() & 1 || links.size == 0) {
+                if(rand32() & 1 || ls == 0) {
                     size_t i = rand64() % size;
                     size_t j = input_size + (rand64() % (size - input_size));
                     
-                    list<Link>::type* link = nodes[j].begin;
-                    while(link != nullptr && link->data.j == j) {
-                        if(link->data.i == i)
+                    std::list<Link*>::iterator link = nodes[j].begin;
+                    while(link != links.end() && (*link)->j == j) {
+                        if((*link)->i == i)
                             return;
                         
-                        link = link->next;
+                        ++link;
                     }
                     
                     if(!has_node(i, j) && i != j) {
@@ -213,23 +224,23 @@ namespace NE {
                         }
                         
                         link.weight = gaussian_random();
-                        insert(new list<Link>::type(link));
+                        insert(new Link(link));
                     }
                 }else{
-                    list<Link>::type* link = random_link();
+                    std::list<Link*>::iterator link = random_link();
                     remove(link);
-                    delete link;
+                    delete *link;
                 }
             }
         }else{
             size_t i = rand64() % nodes.size();
             nodes[i].function.randomlize();
-            list<Link>::type* link = nodes[i].begin;
+            std::list<Link*>::iterator link = nodes[i].begin;
             
             if(nodes[i].links != 0) {
-                while(link != nullptr && link->data.j == i) {
-                    link->data.weight = gaussian_random();
-                    link = link->next;
+                while(link != links.end() && (*link)->j == i) {
+                    (*link)->weight = gaussian_random();
+                    ++link;
                 }
             }
         }
@@ -241,6 +252,9 @@ namespace NE {
     }
     
     Network& Network::operator = (const Network &network) {
+        for(Link* link : links)
+            delete link;
+        
         links.clear();
         
         nodes = network.nodes;
@@ -257,22 +271,22 @@ namespace NE {
         
         for(size_t i = 0; i < size; ++i) {
             nodes[i].links = 0;
-            nodes[i].begin = nullptr;
+            nodes[i].begin = links.end();
         }
         
         for(size_t i = 0; i < size; ++i) {
-            if(network.nodes[i].begin != nullptr) {
-                insert(new list<Link>::type(network.nodes[i].begin->data));
+            if(network.nodes[i].begin != network.links.end()) {
+                insert(new Link(**network.nodes[i].begin));
             }
         }
         
-        list<Link>::type* link = network.links.begin;
+        std::list<Link*>::const_iterator link = network.links.begin();
         
-        while(link != nullptr) {
-            if(network.nodes[link->data.j].begin != link) {
-                insert(new list<Link>::type(link->data));
+        while(link != network.links.end()) {
+            if(network.nodes[(*link)->j].begin != link) {
+                insert(new Link(**link));
             }
-            link = link->next;
+            ++link;
         }
         
         return *this;
