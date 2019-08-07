@@ -32,7 +32,7 @@ template <>
 struct std::hash<NE::Innov>
 {
     inline size_t operator () (const NE::Innov& x) const {
-        return x.link->i ^ x.link->j;
+        return (x.link->i ^ x.link->j) + (x.link->i << 17) + 71 * x.link->j;
     }
 };
 
@@ -85,12 +85,14 @@ namespace NE {
         
         size_t age;
         
+        size_t k;
+        
         static void crossover(Network* A, Network* B, Network* C);
         
-        static float closeness(Network* A, Network* B);
+        static float closeness(Network* A, Network* B, float q);
 
     protected:
-                
+        
         void insert(Link* link);
         
         void remove(std::list<Link*>::iterator link);
@@ -116,6 +118,7 @@ namespace NE {
     };
     
     inline bool network_sort (Network* A, Network* B) {
+        //return A->fitness / (float) A->k < B->fitness / (float) B->k;
         return A->fitness < B->fitness;
     }
     

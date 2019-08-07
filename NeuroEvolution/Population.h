@@ -53,33 +53,48 @@ namespace NE {
             size_t size = networks.size();
             size_t half_size = size / 2;
             
+            /*
+            float q = 3.0f;
+            float w = 1.0f;
+            
+            for(size_t i = 0; i < size; ++i) {
+                networks[i]->k = 0;
+                for(size_t j = 0; j < size; ++j) {
+                    if(Network::closeness(networks[i], networks[j], w) < q) {
+                        ++networks[i]->k;
+                    }
+                }
+            }
+            */
+            
             std::sort(networks.data(), networks.data() + size, network_sort);
             
-            innov_map map;
+            map.clear();
             
             for(size_t i = 0; i < half_size; ++i) {
-                size_t i1 = size - 1 - random() * (half_size - 1);
-                size_t i2 = size - 1 - random() * (half_size - 1);
-
+                size_t i1 = size - 1 - size_t(random() * half_size);
+                size_t i2 = size - 1 - size_t(random() * half_size);
+                
                 Network::crossover(networks[i1], networks[i2], networks[i]);
+                //*(networks[i]) = *(networks[i1]);
                 
                 if(rand32() & 1) {
                     networks[i]->mutate(&map, &innovation);
                 }
-                
-                networks[i]->age = 0;
             }
             
             for(size_t i = 0; i < size; ++i) {
                 ++networks[i]->age;
             }
-
+            
             return networks.back();
         }
         
+        size_t innovation;
+        innov_map map;
+        
     protected:
         
-        size_t innovation;
         std::vector<Network*> networks;
         std::vector<Species> species;
         

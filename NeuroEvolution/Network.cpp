@@ -45,7 +45,7 @@ namespace NE {
         std::list<Link*>::iterator* A = &(nodes[link->j].begin);
         
         *A = links.insert(*A, link);
-        
+
         std::list<Link*>::iterator q = innovs.end(), p;
         
         while(q != innovs.begin()) {
@@ -66,10 +66,10 @@ namespace NE {
     }
     
     void Network::remove(std::list<Link*>::iterator link) {
-        std::list<Link*>::iterator q = link;
-        ++q;
-        
         if(nodes[(*link)->j].begin == link) {
+            std::list<Link*>::iterator q = link;
+            ++q;
+            
             if(q != links.end() && (*q)->j == (*link)->j) {
                 nodes[(*link)->j].begin = q;
             }else{
@@ -105,6 +105,8 @@ namespace NE {
             nodes[i].value = float_t(0);
         }
         
+        size_t qf = input_size + output_size;
+        
         std::list<Link*>::iterator link = links.begin();
         Node* ns = nodes.data();
         while(link != links.end()) {
@@ -113,7 +115,7 @@ namespace NE {
             std::list<Link*>::iterator q = link;
             ++q;
             
-            if(q == links.end() || (*q)->j != (*link)->j) {
+            if((q == links.end() || (*q)->j != (*link)->j) && (*link)->j >= qf) {
                 compute_node(ns + (*link)->j);
             }
 
@@ -131,7 +133,7 @@ namespace NE {
             stack.pop();
             
             std::list<Link*>::iterator link = nodes[n].begin;
-            while(link != links.end() && (*link)->j == i) {
+            while(link != links.end() && (*link)->j == n) {
                 if((*link)->i == j)
                     return true;
                 
@@ -154,6 +156,7 @@ namespace NE {
     
     size_t Network::create_node() {
         Node node;
+        
         node.begin = links.end();
         node.links = 0;
         
@@ -177,23 +180,23 @@ namespace NE {
     
     void Network::mutate(innov_map *map, size_t *innov) {
         size_t size = nodes.size();
+        size_t ls = links.size();
         
         {
-            size_t q = 1 + links.size();
+            size_t q = 1 + ls;
             
             std::list<Link*>::iterator link = links.begin();
             while(link != links.end()) {
                 if((rand64() % q) == 0) (*link)->weight += random() * randposneg();
                 ++link;
             }
+            
         }
         
         uint32_t k = rand32() & 0xffff;
         
-        size_t ls = links.size();
-        
-        if(k & 1) {
-            if(k <= 0x7fff && ls != 0) {
+        if(true) {
+            if(k <= 0x3fff && ls != 0) {
                 std::list<Link*>::iterator link = random_link();
                 size_t node = create_node();
                 
@@ -201,13 +204,15 @@ namespace NE {
                 new_link->i = (*link)->i;
                 new_link->j = node;
                 
-                auto it = map->find(Innov(new_link));
+                Innov in(new_link);
+                
+                auto it = map->find(in);
                 
                 if(it != map->end()) {
                     new_link->innovation = it->second;
                 }else{
                     new_link->innovation = *innov;
-                    map->insert({Innov(new_link), new_link->innovation});
+                    map->insert({in, new_link->innovation});
                     ++(*innov);
                 }
                 
@@ -237,13 +242,15 @@ namespace NE {
                         link->i = i;
                         link->j = j;
                         
-                        auto it = map->find(Innov(link));
+                        Innov in(link);
+                        
+                        auto it = map->find(in);
                         
                         if(it != map->end()) {
                             link->innovation = it->second;
                         }else{
                             link->innovation = *innov;
-                            map->insert({Innov(link), link->innovation});
+                            map->insert({in, link->innovation});
                             ++(*innov);
                         }
                         
@@ -271,7 +278,6 @@ namespace NE {
     }
     
     Network::Network(const Network& network) {
-        reset(network.input_size, network.output_size);
         *this = network;
     }
     
@@ -315,6 +321,7 @@ namespace NE {
         }
         
         C->fitness = (A->fitness + B->fitness) * 0.5f;
+        C->age = 0;
         
         std::list<Link*>::iterator itA, itB;
         
@@ -349,6 +356,51 @@ namespace NE {
                 ++itB;
             }
         }
+    }
+    
+    float Network::closeness(Network *A, Network *B, float q) {
+        std::list<Link*>::iterator itA, itB;
+        
+        itA = A->innovs.begin();
+        itB = B->innovs.begin();
+        
+        size_t miss = 0;
+        float W = 0.0f;
+        
+        size_t n = 0;
+        
+        while(itA != A->innovs.end() || itB != B->innovs.end()) {
+            if(itA == A->innovs.end()) {
+                ++miss;
+                ++itB;
+                continue;
+            }
+            
+            if(itB == B->innovs.end()) {
+                ++miss;
+                ++itA;
+                continue;
+            }
+            
+            if((*itA)->innovation == (*itB)->innovation) {
+                float d = (*itA)->weight - (*itB)->weight;
+                
+                W += d * d;
+                ++n;
+
+                ++itA;
+                ++itB;
+            }else if((*itA)->innovation < (*itB)->innovation) {
+                ++miss;
+                ++itA;
+            }else{
+                ++miss;
+                ++itB;
+            }
+        }
+        
+        size_t N = std::max(A->links.size(), B->links.size());
+        return (N == 0 ? 0.0f : miss / (float) N) + (n == 0 ? 0.0f : sqrtf(W / n) * q);
     }
     
 }

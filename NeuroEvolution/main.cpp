@@ -20,7 +20,7 @@ FILE* log_file;
 int gens = 128;
 int pop = 1024;
 
-int print_every = 32;
+int print_every = 8;
 
 int trials = 8;
 
@@ -96,7 +96,7 @@ struct Pendulum : public Obj
         net->compute();
         
         float_t action = outputs[0].value;
-        
+                
         action = action < -1.0f ? -1.0f : (action > 1.0f ? 1.0f : action);
         
         action *= f;
@@ -179,7 +179,7 @@ int main(int argc, const char * argv[]) {
     fprintf(log_file, "generation index age fitness complexity size\n");
     
     fflush(log_file);
-    
+
     for(int n = 0; n < gens; ++n) {
         for(int i = 0; i < pop; ++i) {
             objs[i].reward = 0.0f;
@@ -208,6 +208,8 @@ int main(int argc, const char * argv[]) {
         best = population.step();
         
         fprintf(log_file, "best fitness %15.4f size %8zu complexity %8zu \n", best->fitness, best->size(), best->complexity());
+        
+        fprintf(log_file, "%8zu\n", population.innovation);
         
         fflush(log_file);
     }

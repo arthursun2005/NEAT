@@ -75,6 +75,12 @@ namespace NE {
         }
         
         inline float_t operator () (float_t x) const {
+            //return exp(-(x * x) * 0.5f);
+            
+            //return x / (1.0f + fabs(x));
+            
+            return 1.0f / (1.0f + exp(-4.0f * x));
+            
             switch(type) {
                 case e_linear:
                     return x;
