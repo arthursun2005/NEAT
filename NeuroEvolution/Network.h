@@ -11,38 +11,6 @@
 
 #include "Node.h"
 #include <vector>
-#include <unordered_map>
-
-namespace NE {
-
-    struct Innov
-    {
-        const Link* link;
-        
-        Innov() {}
-        
-        Innov(const Link* link) : link(link) {}
-    };
-    
-    typedef std::unordered_map<Innov, size_t> innov_map;
-    
-}
-
-template <>
-struct std::hash<NE::Innov>
-{
-    inline size_t operator () (const NE::Innov& x) const {
-        return (x.link->i ^ x.link->j) + (x.link->i << 17) + 71 * x.link->j;
-    }
-};
-
-template <>
-struct std::equal_to<NE::Innov>
-{
-    inline bool operator () (const NE::Innov& a, const NE::Innov& b) const {
-        return a.link->i == b.link->i && a.link->j == b.link->j;
-    }
-};
 
 namespace NE {
 
@@ -79,46 +47,39 @@ namespace NE {
         
         void clear();
         
-        void mutate(innov_map* map, size_t* innov);
-        
+        void mutate(innov_set* map, size_t* innov);
+
         float fitness;
         
         size_t age;
-        
-        size_t k;
-        
+                
         static void crossover(Network* A, Network* B, Network* C);
         
         static float closeness(Network* A, Network* B, float q);
-
+        
     protected:
+        
+        bool outputs_off() const;
         
         void insert(Link* link);
         
-        void remove(std::list<Link*>::iterator link);
+        void disable(Link* link);
         
         size_t create_node();
-        
-        std::list<Link*>::iterator random_link();
-        
-        bool has_node(size_t i, size_t j) const;
-        
+                
         size_t input_size;
         size_t output_size;
         
         void resize();
         
         std::vector<Node> nodes;
+        std::vector<Link*> links;
         
-        std::list<Link*> links;
-        std::list<Link*> innovs;
+        innov_set set;
         
-        size_t next;
-
     };
     
     inline bool network_sort (Network* A, Network* B) {
-        //return A->fitness / (float) A->k < B->fitness / (float) B->k;
         return A->fitness < B->fitness;
     }
     

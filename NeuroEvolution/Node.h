@@ -10,7 +10,7 @@
 #define Node_h
 
 #include "common.h"
-#include <list>
+#include <unordered_set>
 
 namespace NE {
     
@@ -20,28 +20,47 @@ namespace NE {
         
         float_t weight;
         
-        size_t innovation;
+        size_t innov;
         
-        std::list<Link*>::iterator innov_it;
+        bool enabled;
     };
     
     struct LinkByInnov
     {
         inline bool operator () (Link* A, Link* B) const {
-            return A->innovation < B->innovation;
+            return A->innov < B->innov;
         }
     };
+
+    typedef std::unordered_set<Link*> innov_set;
     
     struct Node
     {
         float_t value;
-        size_t links;
+        float_t sum;
         
         Function function;
-        
-        std::list<Link*>::iterator begin;
+                
+        size_t acts;
+        bool computed;
     };
     
 }
+
+template <>
+struct std::hash<NE::Link*>
+{
+    inline size_t operator () (const NE::Link* x) const {
+        return (x->i ^ x->j) + (x->i << 17) + 71 * x->j;
+    }
+};
+
+template <>
+struct std::equal_to<NE::Link*>
+{
+    inline bool operator () (const NE::Link* a, const NE::Link* b) const {
+        return a->i == b->i && a->j == b->j;
+    }
+};
 
 #endif /* Node_h */

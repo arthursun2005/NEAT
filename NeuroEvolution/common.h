@@ -47,74 +47,10 @@ namespace NE {
         return rand32() <= 0x7fffffff ? -1.0 : 1.0;
     }
     
-    enum function_types
-    {
-        e_linear = 0,
-        e_elliot1,
-        e_elliot2,
-        e_gaussian,
-        e_step1,
-        e_step2,
-        e_relu,
-        e_abs,
-        e_sine,
-        e_cosine,
-        functions_size
-    };
-    
     struct Function
     {
-        int type;
-        
-        Function() {
-            randomlize();
-        }
-        
-        inline void randomlize() {
-            type = rand32() % functions_size;
-        }
-        
         inline float_t operator () (float_t x) const {
-            //return exp(-(x * x) * 0.5f);
-            
-            //return x / (1.0f + fabs(x));
-            
-            return 1.0f / (1.0f + exp(-4.0f * x));
-            
-            switch(type) {
-                case e_linear:
-                    return x;
-                    
-                case e_elliot1:
-                    return 0.5f + (0.5f * x / (1.0f + fabs(x)));
-                    
-                case e_elliot2:
-                    return x / (1.0f + fabs(x));
-                    
-                case e_gaussian:
-                    return exp(-(x * x) * 0.5f);
-                    
-                case e_step1:
-                    return x > 0.0f;
-                    
-                case e_step2:
-                    return x > 0.0f ? 1.0f : -1.0f;
-                    
-                case e_relu:
-                    return x > 0.0f ? x : 0.0f;
-                    
-                case e_abs:
-                    return fabs(x);
-                    
-                case e_sine:
-                    return sin(x);
-                    
-                case e_cosine:
-                    return cos(x);
-                    
-                default:
-                    return 0.0f;
-            }
+            return x / (1.0f + fabs(x));
         }
     };
 }
