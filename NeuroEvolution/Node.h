@@ -18,7 +18,7 @@ namespace NE {
         size_t i;
         size_t j;
         
-        float_t weight;
+        float weight;
         
         size_t innov;
         
@@ -31,13 +31,13 @@ namespace NE {
             return A->innov < B->innov;
         }
     };
-
+    
     typedef std::unordered_set<Link*> innov_set;
     
     struct Node
     {
-        float_t value;
-        float_t sum;
+        float value;
+        float sum;
         
         Function function;
                 
@@ -51,7 +51,7 @@ template <>
 struct std::hash<NE::Link*>
 {
     inline size_t operator () (const NE::Link* x) const {
-        return (x->i ^ x->j) + (x->i << 17) + 71 * x->j;
+        return (x->i ^ x->j) + (x->j << 17) + 71 * x->i;
     }
 };
 

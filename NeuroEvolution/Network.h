@@ -25,6 +25,10 @@ namespace NE {
         
         Network& operator = (const Network& network);
         
+        ~Network() {
+            clear();
+        }
+        
         inline Node* inputs() {
             return nodes.data();
         }
@@ -47,15 +51,23 @@ namespace NE {
         
         void clear();
         
-        void mutate(innov_set* map, size_t* innov);
+        void mutate(innov_set* set, size_t* innov);
 
         float fitness;
         
+        float strength;
+        
+        bool killed;
+        
         size_t age;
+        
+        size_t k;
                 
         static void crossover(Network* A, Network* B, Network* C);
         
-        static float closeness(Network* A, Network* B, float q);
+        static float distance_topology(Network* A, Network* B);
+        
+        static float distance_weights(Network* A, Network* B);
         
     protected:
         
@@ -80,7 +92,7 @@ namespace NE {
     };
     
     inline bool network_sort (Network* A, Network* B) {
-        return A->fitness < B->fitness;
+        return A->strength < B->strength;
     }
     
 }

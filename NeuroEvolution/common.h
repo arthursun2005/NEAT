@@ -12,11 +12,12 @@
 #include <cmath>
 #include <functional>
 #include <random>
+#include <cfloat>
 
 namespace NE {
     
-    typedef float float_t;
-        
+    const float similar_rate = 2.0f;
+    
     inline uint32_t rand32() {
         return arc4random();
     }
@@ -33,9 +34,9 @@ namespace NE {
         ::operator delete(ptr);
     }
     
-    inline float_t gaussian_random() {
+    inline float gaussian_random() {
         thread_local std::default_random_engine g;
-        thread_local std::normal_distribution<float_t> d(0.0, 1.0);
+        thread_local std::normal_distribution<float> d(0.0f, 1.0f);
         return d(g);
     }
     
@@ -49,8 +50,8 @@ namespace NE {
     
     struct Function
     {
-        inline float_t operator () (float_t x) const {
-            return x / (1.0f + fabs(x));
+        inline float operator () (float x) const {
+            return tanhf(x);
         }
     };
 }

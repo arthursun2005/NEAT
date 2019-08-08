@@ -42,22 +42,20 @@ struct Pendulum : public Obj
     static const int input_size = 5;
     static const int output_size = 1;
     
-    typedef NE::float_t float_t;
+    float x;
+    float vx;
+    float a;
+    float va;
     
-    float_t x;
-    float_t vx;
-    float_t a;
-    float_t va;
+    float g;
+    float m_c;
+    float m_p;
+    float m;
+    float l;
+    float f;
+    float b;
     
-    float_t g;
-    float_t m_c;
-    float_t m_p;
-    float_t m;
-    float_t l;
-    float_t f;
-    float_t b;
-    
-    float_t xt = 2.4f;
+    float xt = 2.4f;
     
     Pendulum() {
         g = 9.82f;
@@ -84,8 +82,8 @@ struct Pendulum : public Obj
         NE::Node* inputs = net->inputs();
         NE::Node* outputs = net->outputs();
         
-        float_t c = cosf(a);
-        float_t s = sinf(a);
+        float c = cosf(a);
+        float s = sinf(a);
         
         inputs[0].value = vx;
         inputs[1].value = x / xt;
@@ -95,18 +93,18 @@ struct Pendulum : public Obj
         
         net->compute();
         
-        float_t action = outputs[0].value;
+        float action = outputs[0].value;
                 
         action = action < -1.0f ? -1.0f : (action > 1.0f ? 1.0f : action);
         
         action *= f;
         
-        float_t va2 = va * va;
-        float_t sc = s * c;
-        float_t c2 = c * c;
+        float va2 = va * va;
+        float sc = s * c;
+        float c2 = c * c;
         
-        float_t vvx = (-2.0f * m_p * l * va2 * s + 3.0f * m_p * g * sc + 4.0f * action - 4.0f * b * vx) / (4.0f * m - 3.0f * m_p * c2);
-        float_t vva = (-3.0f * m_p * l * va2 * sc + 6.0f * m * g * s + 6.0f * (action - b * vx) * c) / (4.0f * l * m - 3.0f * m_p * l * c2);
+        float vvx = (-2.0f * m_p * l * va2 * s + 3.0f * m_p * g * sc + 4.0f * action - 4.0f * b * vx) / (4.0f * m - 3.0f * m_p * c2);
+        float vva = (-3.0f * m_p * l * va2 * sc + 6.0f * m * g * s + 6.0f * (action - b * vx) * c) / (4.0f * l * m - 3.0f * m_p * l * c2);
         
         vx = vx + vvx * dt;
         va = va + vva * dt;
@@ -176,8 +174,6 @@ int main(int argc, const char * argv[]) {
     
     fprintf(log_file, "Population: %d \n \n ", pop);
     
-    fprintf(log_file, "generation index age fitness complexity size\n");
-    
     fflush(log_file);
 
     for(int n = 0; n < gens; ++n) {
@@ -200,7 +196,7 @@ int main(int argc, const char * argv[]) {
         if((n%print_every) == 0) {
         
             for(int i = 0; i < pop; ++i) {
-                fprintf(log_file, "%5d # %5d: %5zu %8.2f %5zu %5zu \n", n, i, population[i]->age, population[i]->fitness, population[i]->complexity(), population[i]->size());
+                fprintf(log_file, "%5d # %5d: %5zu %8.2f %8.2f %5zu %5zu %5zu \n", n, i, population[i]->age, population[i]->fitness, population[i]->strength, population[i]->complexity(), population[i]->size(), population[i]->k);
             }
             
         }

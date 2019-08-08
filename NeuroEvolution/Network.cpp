@@ -10,6 +10,17 @@
 #include <stack>
 
 namespace NE {
+    
+    size_t get_innov(innov_set* set, size_t* innov, Link* link) {
+        auto it = set->find(link);
+        
+        if(it != set->end()) {
+            return (*it)->innov;
+        }else{
+            set->insert(link);
+            return ++(*innov);
+        }
+    }
 
     void Network::clear() {
         set.clear();
@@ -57,11 +68,7 @@ namespace NE {
         size_t n = 0;
         size_t lm = links.size();
         
-        while(outputs_off()) {
-            if(n == lm) {
-                break;
-            }
-            
+        while(outputs_off() && n != lm) {
             for(size_t i = input_size; i < size; ++i) {
                 nodes[i].computed = false;
                 nodes[i].sum = 0.0f;
@@ -87,7 +94,7 @@ namespace NE {
                 }
             }
             
-             ++n;
+            ++n;
         }
     }
     
@@ -105,6 +112,7 @@ namespace NE {
         set.insert(link);
         
         std::vector<Link*>::iterator end = links.end();
+        
         while(end-- != links.begin()) {
             if(link->innov > (*end)->innov) break;
         }
@@ -117,18 +125,15 @@ namespace NE {
         link->enabled = false;
     }
     
-    void Network::mutate(innov_set *map, size_t *innov) {
+    void Network::mutate(innov_set *set, size_t *innov) {
         size_t size = nodes.size();
         size_t ls = links.size();
         
-        {
-            size_t q = 1 + ls;
-            
+        {            
             for(Link* link : links) {
-                if((rand64() % q) == 0)
+                if(rand64() & 1)
                     link->weight += random() * randposneg();
             }
-            
         }
         
         uint32_t k = rand32() & 0xffff;
@@ -147,15 +152,7 @@ namespace NE {
                     link1->i = link->i;
                     link1->j = node;
                     
-                    auto it = map->find(link1);
-                    
-                    if(it != map->end()) {
-                        link1->innov = (*it)->innov;
-                    }else{
-                        link1->innov = *innov;
-                        map->insert(link1);
-                        ++(*innov);
-                    }
+                    link1->innov = get_innov(set, innov, link1);
                     
                     link1->weight = gaussian_random();
                     link1->enabled = true;
@@ -168,15 +165,7 @@ namespace NE {
                     link2->i = node;
                     link2->j = link->j;
                     
-                    auto it = map->find(link2);
-                    
-                    if(it != map->end()) {
-                        link2->innov = (*it)->innov;
-                    }else{
-                        link2->innov = *innov;
-                        map->insert(link2);
-                        ++(*innov);
-                    }
+                    link2->innov = get_innov(set, innov, link2);
                     
                     link2->weight = gaussian_random();
                     link2->enabled = true;
@@ -192,21 +181,13 @@ namespace NE {
                     l.i = i;
                     l.j = j;
                     
-                    if(set.find(&l) != set.end() || i == j) {
+                    if(this->set.find(&l) != this->set.end() || i == j) {
                         return;
                     }
                     
                     Link* link = new Link(l);
                     
-                    auto it = map->find(link);
-                    
-                    if(it != map->end()) {
-                        link->innov = (*it)->innov;
-                    }else{
-                        link->innov = *innov;
-                        map->insert(link);
-                        ++(*innov);
-                    }
+                    link->innov = get_innov(set, innov, link);
                     
                     link->weight = gaussian_random();
                     link->enabled = true;
@@ -295,40 +276,34 @@ namespace NE {
             }
         }
     }
-    /*
-    float Network::closeness(Network *A, Network *B, float q) {
-        std::list<Link*>::iterator itA, itB;
+    
+    float Network::distance_topology(Network *A, Network *B) {
+        std::vector<Link*>::iterator itA, itB;
         
-        itA = A->innovs.begin();
-        itB = B->innovs.begin();
+        itA = A->links.begin();
+        itB = B->links.begin();
         
         size_t miss = 0;
-        float W = 0.0f;
-        
         size_t n = 0;
         
-        while(itA != A->innovs.end() || itB != B->innovs.end()) {
-            if(itA == A->innovs.end()) {
+        while(itA != A->links.end() || itB != B->links.end()) {
+            if(itA == A->links.end()) {
                 ++miss;
                 ++itB;
                 continue;
             }
             
-            if(itB == B->innovs.end()) {
+            if(itB == B->links.end()) {
                 ++miss;
                 ++itA;
                 continue;
             }
             
-            if((*itA)->innovation == (*itB)->innovation) {
-                float d = (*itA)->weight - (*itB)->weight;
-                
-                W += d * d;
+            if((*itA)->innov == (*itB)->innov) {
                 ++n;
-
                 ++itA;
                 ++itB;
-            }else if((*itA)->innovation < (*itB)->innovation) {
+            }else if((*itA)->innov < (*itB)->innov) {
                 ++miss;
                 ++itA;
             }else{
@@ -337,8 +312,47 @@ namespace NE {
             }
         }
         
-        size_t N = std::max(A->links.size(), B->links.size());
-        return (N == 0 ? 0.0f : miss / (float) N) + (n == 0 ? 0.0f : sqrtf(W / n) * q);
+        size_t N = miss + n;
+        return (N == 0 ? 0.0f : miss / (float) N);
     }
-    */
+    
+    float Network::distance_weights(Network *A, Network *B) {
+        std::vector<Link*>::iterator itA, itB;
+        
+        itA = A->links.begin();
+        itB = B->links.begin();
+        
+        float W = 0.0f;
+        
+        size_t n = 0;
+        
+        while(itA != A->links.end() || itB != B->links.end()) {
+            if(itA == A->links.end()) {
+                ++itB;
+                continue;
+            }
+            
+            if(itB == B->links.end()) {
+                ++itA;
+                continue;
+            }
+            
+            if((*itA)->innov == (*itB)->innov) {
+                float d = (*itA)->weight - (*itB)->weight;
+                
+                W += d * d;
+                ++n;
+                
+                ++itA;
+                ++itB;
+            }else if((*itA)->innov < (*itB)->innov) {
+                ++itA;
+            }else{
+                ++itB;
+            }
+        }
+        
+        return (n == 0 ? 0.0f : sqrtf(W / (float) n));
+    }
+    
 }
