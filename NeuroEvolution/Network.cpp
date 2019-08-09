@@ -11,14 +11,14 @@
 
 namespace NE {
     
-    size_t get_innov(innov_set* set, size_t* innov, Link* link) {
-        auto it = set->find(link);
+    void set_innov(innov_map* map, size_t* innov, Link* link) {
+        auto it = map->find(link);
         
-        if(it != set->end()) {
-            return (*it)->innov;
+        if(it != map->end()) {
+            link->innov = it->second;
         }else{
-            set->insert(link);
-            return ++(*innov);
+            link->innov = (*innov)++;
+            map->insert({Innov(link), link->innov});
         }
     }
 
@@ -40,6 +40,10 @@ namespace NE {
         output_size = outputs;
         
         age = 0;
+        
+        for(size_t i = 0; i < input_size; ++i) {
+            nodes[i].acts = 1;
+        }
     }
     
     bool Network::outputs_off() const {
@@ -53,11 +57,6 @@ namespace NE {
     
     void Network::compute() {
         size_t size = nodes.size();
-        
-        for(size_t i = 0; i < input_size; ++i) {
-            nodes[i].value = nodes[i].function(nodes[i].value);
-            nodes[i].acts = 1;
-        }
         
         for(size_t i = input_size; i < size; ++i) {
             nodes[i].acts = 0;
@@ -100,11 +99,8 @@ namespace NE {
     
     size_t Network::create_node() {
         Node node;
-        
         size_t i = nodes.size();
-        
         nodes.push_back(node);
-        
         return i;
     }
     
@@ -121,82 +117,80 @@ namespace NE {
         links.insert(end, link);
     }
     
-    void Network::disable(Link *link) {
-        link->enabled = false;
-    }
-    
-    void Network::mutate(innov_set *set, size_t *innov) {
+    void Network::mutate(innov_map *map, size_t *innov) {
         size_t size = nodes.size();
         size_t ls = links.size();
         
         {            
             for(Link* link : links) {
-                if(rand64() & 1)
+                if(rand32() & 1)
                     link->weight += random() * randposneg();
             }
         }
         
         uint32_t k = rand32() & 0xffff;
         
-        if(true) {
-            if(k <= 0x3fff && ls != 0) {
-                Link* link = links[rand64() % ls];
-                size_t node = create_node();
+        if(k <= 0x0fff && ls != 0) {
+            Link* link = links[rand64() % ls];
+            size_t node = create_node();
+            
+            if(!link->enabled) return;
+            
+            link->enabled = false;
+            
+            {
+                Link* link1 = new Link();
+                link1->i = link->i;
+                link1->j = node;
                 
-                if(!link->enabled) return;
+                set_innov(map, innov, link1);
                 
-                link->enabled = false;
+                link1->weight = gaussian_random();
+                link1->enabled = true;
                 
-                {
-                    Link* link1 = new Link();
-                    link1->i = link->i;
-                    link1->j = node;
-                    
-                    link1->innov = get_innov(set, innov, link1);
-                    
-                    link1->weight = gaussian_random();
-                    link1->enabled = true;
-                    
-                    insert(link1);
-                }
+                insert(link1);
+            }
+            
+            {
+                Link* link2 = new Link();
+                link2->i = node;
+                link2->j = link->j;
                 
-                {
-                    Link* link2 = new Link();
-                    link2->i = node;
-                    link2->j = link->j;
-                    
-                    link2->innov = get_innov(set, innov, link2);
-                    
-                    link2->weight = gaussian_random();
-                    link2->enabled = true;
-                    
-                    insert(link2);
-                }
-            }else{
-                if(rand32() & 1 || ls == 0) {
-                    size_t i = rand64() % size;
-                    size_t j = input_size + (rand64() % (size - input_size));
-                    
-                    Link l;
-                    l.i = i;
-                    l.j = j;
-                    
-                    if(this->set.find(&l) != this->set.end() || i == j) {
-                        return;
-                    }
-                    
+                set_innov(map, innov, link2);
+                
+                link2->weight = 1.0f;
+                link2->enabled = true;
+                
+                insert(link2);
+            }
+        }else{
+            size_t i = rand64() % size;
+            size_t j = input_size + (rand64() % (size - input_size));
+            
+            Link l;
+            l.i = i;
+            l.j = j;
+            
+            if(i != j) {
+                auto it = set.find(&l);
+                if(it != set.end()) {
+                    (*it)->enabled = !(*it)->enabled;
+                }else{
                     Link* link = new Link(l);
                     
-                    link->innov = get_innov(set, innov, link);
+                    set_innov(map, innov, link);
                     
                     link->weight = gaussian_random();
                     link->enabled = true;
                     
                     insert(link);
-                }else{
-                    disable(links[rand64() % ls]);
                 }
             }
+        }
+        
+        if(ls != 0) {
+            Link* link = links[rand64() % ls];
+            link->enabled = !link->enabled;
         }
     }
     
@@ -210,41 +204,43 @@ namespace NE {
         nodes = network.nodes;
         
         fitness = network.fitness;
-        
         age = network.age;
-                
+        
         for(Link* link : network.links) {
             insert(new Link(*link));
-            ++link;
         }
         
         return *this;
     }
     
-    void Network::crossover(Network* A, Network* B, Network* C) {
+    void Network::crossover(const Network* A, const Network* B, Network* C) {
         C->reset(A->input_size, B->output_size);
         
-        size_t size = std::max(A->nodes.size(), B->nodes.size());
+        size_t as = A->nodes.size(), bs = B->nodes.size();
+        size_t size = std::max(as, bs);
         
         C->nodes.resize(size);
         
         C->fitness = (A->fitness + B->fitness) * 0.5f;
-        C->age = 0;
         
-        std::vector<Link*>::iterator itA, itB;
+        std::vector<Link*>::const_iterator itA, itB;
         
         itA = A->links.begin();
         itB = B->links.begin();
         
         while(itA != A->links.end() || itB != B->links.end()) {
             if(itA == A->links.end()) {
-                C->insert(new Link(**itB));
+                Link* link = new Link(**itB);
+                if((rand32() & 0xff) <= 0x1f) link->enabled = !link->enabled;
+                C->insert(link);
                 ++itB;
                 continue;
             }
             
             if(itB == B->links.end()) {
-                C->insert(new Link(**itA));
+                Link* link = new Link(**itA);
+                if((rand32() & 0xff) <= 0x1f) link->enabled = !link->enabled;
+                C->insert(link);
                 ++itA;
                 continue;
             }
@@ -254,13 +250,13 @@ namespace NE {
                 link->weight = ((*itA)->weight + (*itB)->weight) * 0.5f;
                 
                 if((*itA)->enabled && (*itB)->enabled) {
-                    link->enabled = (rand32() & 0xff) <= 0x3f ? false : true;
+                    link->enabled = (rand32() & 0xff) <= 0x1f ? false : true;
                 }else if((*itA)->enabled) {
                     link->enabled = (rand32() & 0xff) <= 0x7f ? true : false;
                 }else if((*itB)->enabled) {
                     link->enabled = (rand32() & 0xff) <= 0x7f ? false : true;
                 }else{
-                    link->enabled = (rand32() & 0xff) <= 0x3f ? true : false;
+                    link->enabled = (rand32() & 0xff) <= 0x1f ? true : false;
                 }
                 
                 C->insert(link);
@@ -268,17 +264,21 @@ namespace NE {
                 ++itA;
                 ++itB;
             }else if((*itA)->innov < (*itB)->innov) {
-                C->insert(new Link(**itA));
+                Link* link = new Link(**itA);
+                if((rand32() & 0xff) <= 0x1f) link->enabled = !link->enabled;
+                C->insert(link);
                 ++itA;
             }else{
-                C->insert(new Link(**itB));
+                Link* link = new Link(**itB);
+                if((rand32() & 0xff) <= 0x1f) link->enabled = !link->enabled;
+                C->insert(link);
                 ++itB;
             }
         }
     }
     
-    float Network::distance_topology(Network *A, Network *B) {
-        std::vector<Link*>::iterator itA, itB;
+    float Network::distance_topology(const Network *A, const Network *B) {
+        std::vector<Link*>::const_iterator itA, itB;
         
         itA = A->links.begin();
         itB = B->links.begin();
@@ -316,8 +316,8 @@ namespace NE {
         return (N == 0 ? 0.0f : miss / (float) N);
     }
     
-    float Network::distance_weights(Network *A, Network *B) {
-        std::vector<Link*>::iterator itA, itB;
+    float Network::distance_weights(const Network *A, const Network *B) {
+        std::vector<Link*>::const_iterator itA, itB;
         
         itA = A->links.begin();
         itB = B->links.begin();

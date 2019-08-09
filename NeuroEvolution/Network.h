@@ -11,6 +11,7 @@
 
 #include "Node.h"
 #include <vector>
+#include <unordered_set>
 
 namespace NE {
 
@@ -51,32 +52,28 @@ namespace NE {
         
         void clear();
         
-        void mutate(innov_set* set, size_t* innov);
+        void mutate(innov_map* map, size_t* innov);
 
         float fitness;
+                        
+        static void crossover(const Network* A, const Network* B, Network* C);
         
-        float strength;
+        static float distance_topology(const Network* A, const Network* B);
         
-        bool killed;
+        static float distance_weights(const Network* A, const Network* B);
+        
+        inline static float distance(Network* A, Network* B) {
+            return distance_topology(A, B) + distance_weights(A, B) * weights_power;
+        }
         
         size_t age;
-        
-        size_t k;
-                
-        static void crossover(Network* A, Network* B, Network* C);
-        
-        static float distance_topology(Network* A, Network* B);
-        
-        static float distance_weights(Network* A, Network* B);
         
     protected:
         
         bool outputs_off() const;
         
         void insert(Link* link);
-        
-        void disable(Link* link);
-        
+                
         size_t create_node();
                 
         size_t input_size;
@@ -87,12 +84,12 @@ namespace NE {
         std::vector<Node> nodes;
         std::vector<Link*> links;
         
-        innov_set set;
+        std::unordered_set<Link*> set;
         
     };
     
-    inline bool network_sort (Network* A, Network* B) {
-        return A->strength < B->strength;
+    inline bool network_sort (const Network* A, const Network* B) {
+        return A->fitness < B->fitness;
     }
     
 }

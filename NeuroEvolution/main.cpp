@@ -16,11 +16,12 @@ NE::Population population;
 #define time_step 0.01f
 
 FILE* log_file;
+FILE* pos_file;
 
-int gens = 128;
-int pop = 1024;
+int gens = 64;
+int pop = 256;
 
-int print_every = 8;
+int print_every = 1;
 
 int trials = 8;
 
@@ -58,7 +59,7 @@ struct Pendulum : public Obj
     float xt = 2.4f;
     
     Pendulum() {
-        g = 9.82f;
+        g = 9.8f;
         m_c = 0.5f;
         m_p = 0.5f;
         m = m_c + m_p;
@@ -74,8 +75,6 @@ struct Pendulum : public Obj
         vx = NE::gaussian_random() * stdev;
         a = NE::gaussian_random() * stdev + M_PI;
         va = NE::gaussian_random() * stdev;
-        
-        x = (NE::random() - 0.5f) * 2.0f * 0.75f * xt;
     }
     
     void step(float dt) {
@@ -86,7 +85,7 @@ struct Pendulum : public Obj
         float s = sinf(a);
         
         inputs[0].value = vx;
-        inputs[1].value = x / xt;
+        inputs[1].value = x;
         inputs[2].value = va;
         inputs[3].value = c;
         inputs[4].value = s;
@@ -98,7 +97,7 @@ struct Pendulum : public Obj
         action = action < -1.0f ? -1.0f : (action > 1.0f ? 1.0f : action);
         
         action *= f;
-        
+                
         float va2 = va * va;
         float sc = s * c;
         float c2 = c * c;
@@ -168,9 +167,11 @@ void initialize() {
 
 int main(int argc, const char * argv[]) {
     log_file = fopen("log.txt", "w");
+    pos_file = fopen("pos.txt", "w");
+    
     initialize();
     
-    NE::Network* best;
+    NE::Network* best = nullptr;
     
     fprintf(log_file, "Population: %d \n \n ", pop);
     
@@ -193,23 +194,50 @@ int main(int argc, const char * argv[]) {
         
         fprintf(log_file, "Generation %d: \n", n);
         
-        if((n%print_every) == 0) {
+        population.speciate();
         
-            for(int i = 0; i < pop; ++i) {
-                fprintf(log_file, "%5d # %5d: %5zu %8.2f %8.2f %5zu %5zu %5zu \n", n, i, population[i]->age, population[i]->fitness, population[i]->strength, population[i]->complexity(), population[i]->size(), population[i]->k);
-            }
-            
+        
+        for(int i = 0; i < pop; ++i) {
+            //fprintf(log_file, "%5d # %5d: age %5zu %8.2f complexity %5zu size %5zu \n", n, i, population[i]->age, population[i]->fitness, population[i]->complexity(), population[i]->size());
         }
         
-        best = population.step();
+        fprintf(log_file, "\n\n");
         
-        fprintf(log_file, "best fitness %15.4f size %8zu complexity %8zu \n", best->fitness, best->size(), best->complexity());
+        for(NE::Species& sp : population.species) {
+            fprintf(log_file, "Species %8.3f offsprings %5zu size %5zu \n", sp.avg_fitness, sp.offsprings, sp.networks.size());
+        }
+        
+        fprintf(log_file, "\n\n");
+        
+        best = population.reproduce();
+        
+        fprintf(log_file, "best fitness %15.4f complexity %8zu size %8zu \n", best->fitness, best->complexity(), best->size());
         
         fprintf(log_file, "%8zu\n", population.innovation);
         
         fflush(log_file);
     }
     
+    Pendulum p;
+    p.net = best;
+    p.reward = 0.0f;
+    
+    NE::Network* rd = population[0];
+    
+    NE::Network b;
+    NE::Network::crossover(best, rd, &b);
+    
+    p.reset();
+    
+    for(int i = 0; i < time_limit; ++i) {
+        p.step(time_step);
+        
+        fprintf(pos_file, "%f, %f, \n", p.x, p.a);
+    }
+    
+    fprintf(log_file, "%f\n", p.reward);
+    
     fclose(log_file);
+    fclose(pos_file);
     return 0;
 }

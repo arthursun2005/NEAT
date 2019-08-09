@@ -10,7 +10,7 @@
 #define Node_h
 
 #include "common.h"
-#include <unordered_set>
+#include <unordered_map>
 
 namespace NE {
     
@@ -25,22 +25,23 @@ namespace NE {
         bool enabled;
     };
     
-    struct LinkByInnov
+    struct Innov
     {
-        inline bool operator () (Link* A, Link* B) const {
-            return A->innov < B->innov;
-        }
+        size_t i;
+        size_t j;
+        
+        Innov(const Link* link) : i(link->i), j(link->j) {}
     };
     
-    typedef std::unordered_set<Link*> innov_set;
+    typedef std::unordered_map<Innov, size_t> innov_map;
     
     struct Node
     {
         float value;
         float sum;
-        
-        Function function;
                 
+        Function function;
+        
         size_t acts;
         bool computed;
     };
@@ -48,18 +49,18 @@ namespace NE {
 }
 
 template <>
-struct std::hash<NE::Link*>
+struct std::hash<NE::Innov>
 {
-    inline size_t operator () (const NE::Link* x) const {
-        return (x->i ^ x->j) + (x->j << 17) + 71 * x->i;
+    inline size_t operator () (const NE::Innov& x) const {
+        return (x.i ^ x.j) + 71 * x.i;
     }
 };
 
 template <>
-struct std::equal_to<NE::Link*>
+struct std::equal_to<NE::Innov>
 {
-    inline bool operator () (const NE::Link* a, const NE::Link* b) const {
-        return a->i == b->i && a->j == b->j;
+    inline bool operator () (const NE::Innov& a, const NE::Innov& b) const {
+        return a.i == b.i && a.j == b.j;
     }
 };
 

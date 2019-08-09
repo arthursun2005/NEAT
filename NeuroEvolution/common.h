@@ -16,7 +16,8 @@
 
 namespace NE {
     
-    const float similar_rate = 2.0f;
+    static float weights_power = 0.5f;
+    static float similar_rate = 1.0f;
     
     inline uint32_t rand32() {
         return arc4random();
@@ -51,7 +52,7 @@ namespace NE {
     struct Function
     {
         inline float operator () (float x) const {
-            return tanhf(x);
+            return x / (1.0f + fabsf(x));
         }
     };
 }

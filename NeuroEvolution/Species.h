@@ -16,7 +16,13 @@ namespace NE {
     struct Species
     {
         std::vector<Network*> networks;
+        float avg_fitness;
+        size_t offsprings;
     };
+    
+    inline bool species_sort (const Species& A, const Species& B) {
+        return A.avg_fitness < B.avg_fitness;
+    }
     
 }
 

@@ -31,7 +31,8 @@
 		8E1F7A0F22EF9D980046AD75 /* common.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = common.h; sourceTree = "<group>"; };
 		8E1F7A1122EFCF1C0046AD75 /* Network.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Network.cpp; sourceTree = "<group>"; };
 		8E1F7A1622F172360046AD75 /* Population.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Population.h; path = ../../../../../../System/Volumes/Data/Users/arthur/work/code/NeuroEvolution/NeuroEvolution/Population.h; sourceTree = "<group>"; };
-		8E1F7A1722F2B2920046AD75 /* log.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = log.txt; path = ../../../../../../System/Volumes/Data/Users/arthur/work/code/NeuroEvolution/NeuroEvolution/log.txt; sourceTree = "<group>"; };
+		8E21D4F122FD6A4500286DC4 /* pos.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = pos.txt; sourceTree = "<group>"; };
+		8E21D4F222FD882600286DC4 /* log.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = log.txt; sourceTree = "<group>"; };
 		8EBEB9E122F78BD200656B66 /* Species.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Species.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -66,7 +67,8 @@
 			isa = PBXGroup;
 			children = (
 				8E1F7A0622EF9CF80046AD75 /* main.cpp */,
-				8E1F7A1722F2B2920046AD75 /* log.txt */,
+				8E21D4F222FD882600286DC4 /* log.txt */,
+				8E21D4F122FD6A4500286DC4 /* pos.txt */,
 				8E1F7A1622F172360046AD75 /* Population.h */,
 				8EBEB9E122F78BD200656B66 /* Species.h */,
 				8E1F7A1122EFCF1C0046AD75 /* Network.cpp */,
