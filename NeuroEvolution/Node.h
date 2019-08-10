@@ -39,6 +39,8 @@ namespace NE {
     {
         float value;
         float sum;
+        
+        float bias;
                 
         Function function;
         
@@ -46,13 +48,17 @@ namespace NE {
         bool computed;
     };
     
+    inline size_t hashi2(size_t i, size_t j) {
+        return (i ^ j) + 71 * i;
+    }
+    
 }
 
 template <>
 struct std::hash<NE::Innov>
 {
     inline size_t operator () (const NE::Innov& x) const {
-        return (x.i ^ x.j) + 71 * x.i;
+        return NE::hashi2(x.i, x.j);
     }
 };
 
@@ -61,6 +67,22 @@ struct std::equal_to<NE::Innov>
 {
     inline bool operator () (const NE::Innov& a, const NE::Innov& b) const {
         return a.i == b.i && a.j == b.j;
+    }
+};
+
+template <>
+struct std::hash<NE::Link*>
+{
+    inline size_t operator () (const NE::Link* x) const {
+        return NE::hashi2(x->i, x->j);
+    }
+};
+
+template <>
+struct std::equal_to<NE::Link*>
+{
+    inline bool operator () (const NE::Link* a, const NE::Link* b) const {
+        return a->i == b->i && a->j == b->j;
     }
 };
 

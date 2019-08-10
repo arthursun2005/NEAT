@@ -14,6 +14,8 @@
 #include <unordered_set>
 
 namespace NE {
+    
+    struct Species;
 
     class Network
     {
@@ -52,21 +54,21 @@ namespace NE {
         
         void clear();
         
-        void mutate(innov_map* map, size_t* innov);
+        void mutate_weights();
+                
+        void mutate_topology(innov_map* map, size_t* innov);
 
         float fitness;
-                        
+        
+        float placement;
+                                
         static void crossover(const Network* A, const Network* B, Network* C);
         
-        static float distance_topology(const Network* A, const Network* B);
-        
-        static float distance_weights(const Network* A, const Network* B);
-        
-        inline static float distance(Network* A, Network* B) {
-            return distance_topology(A, B) + distance_weights(A, B) * weights_power;
-        }
+        static float distance(const Network* A, const Network* B);
         
         size_t age;
+        
+        Species* sp;
         
     protected:
         
@@ -89,7 +91,7 @@ namespace NE {
     };
     
     inline bool network_sort (const Network* A, const Network* B) {
-        return A->fitness < B->fitness;
+        return A->placement > B->placement;
     }
     
 }

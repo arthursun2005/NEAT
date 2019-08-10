@@ -43,12 +43,19 @@ namespace NE {
         
         for(size_t i = 0; i < input_size; ++i) {
             nodes[i].acts = 1;
+            nodes[i].bias = random() * randposneg() * 2.0f;
+        }
+        
+        for(size_t i = 0; i < output_size; ++i) {
+            nodes[input_size + i].bias = random() * randposneg() * 2.0f;
         }
     }
     
     bool Network::outputs_off() const {
-        for(size_t i = 0; i < output_size; ++i) {
-            if(nodes[input_size + i].acts == 0)
+        size_t size = nodes.size();
+        
+        for(size_t i = input_size; i < size; ++i) {
+            if(nodes[i].acts == 0)
                 return true;
         }
         
@@ -57,6 +64,10 @@ namespace NE {
     
     void Network::compute() {
         size_t size = nodes.size();
+        
+        for(size_t i = 0; i < input_size; ++i) {
+            nodes[i].value += nodes[i].bias;
+        }
         
         for(size_t i = input_size; i < size; ++i) {
             nodes[i].acts = 0;
@@ -87,13 +98,21 @@ namespace NE {
                     ++nodes[i].acts;
                     
                     if(i >= qf)
-                        nodes[i].value = nodes[i].function(nodes[i].sum);
+                        nodes[i].value = nodes[i].function(nodes[i].sum + nodes[i].bias);
                     else
-                        nodes[i].value = nodes[i].sum;
+                        nodes[i].value = nodes[i].sum + nodes[i].bias;
                 }
             }
             
             ++n;
+        }
+        
+        for(Link* link : links) {
+            if(link->enabled) {
+                //if(nodes[link->i].acts != 0 && nodes[link->j].acts != 0) {
+                    //link->weight = hebbian(link->weight, 0.0f, nodes[link->i].value, nodes[link->j].value, 0.00183884, 0.0158606, 0.0133358);
+                //}
+            }
         }
     }
     
@@ -117,16 +136,27 @@ namespace NE {
         links.insert(end, link);
     }
     
-    void Network::mutate(innov_map *map, size_t *innov) {
+    void Network::mutate_weights() {
+        for(Link* link : links) {
+            if(random() < weights_reset_rate)
+                link->weight = 2.0f * random() * randposneg();
+            
+            if(random() < weights_mutate_rate)
+                link->weight += weights_mutation_power * random() * randposneg();
+        }
+        
+        for(Node& node : nodes) {
+            if(random() < weights_reset_rate)
+                node.bias = 2.0f * random() * randposneg();
+            
+            if(random() < weights_mutate_rate)
+                node.bias +=weights_mutation_power *  random() * randposneg();
+        }
+    }
+    
+    void Network::mutate_topology(innov_map *map, size_t *innov) {
         size_t size = nodes.size();
         size_t ls = links.size();
-        
-        {            
-            for(Link* link : links) {
-                if(rand32() & 1)
-                    link->weight += random() * randposneg();
-            }
-        }
         
         uint32_t k = rand32() & 0xffff;
         
@@ -138,6 +168,8 @@ namespace NE {
             
             link->enabled = false;
             
+            nodes[node].bias = 0.0f;
+            
             {
                 Link* link1 = new Link();
                 link1->i = link->i;
@@ -145,7 +177,7 @@ namespace NE {
                 
                 set_innov(map, innov, link1);
                 
-                link1->weight = gaussian_random();
+                link1->weight = 1.0f;
                 link1->enabled = true;
                 
                 insert(link1);
@@ -158,7 +190,7 @@ namespace NE {
                 
                 set_innov(map, innov, link2);
                 
-                link2->weight = 1.0f;
+                link2->weight = link->weight;
                 link2->enabled = true;
                 
                 insert(link2);
@@ -171,20 +203,18 @@ namespace NE {
             l.i = i;
             l.j = j;
             
-            if(i != j) {
-                auto it = set.find(&l);
-                if(it != set.end()) {
-                    (*it)->enabled = !(*it)->enabled;
-                }else{
-                    Link* link = new Link(l);
-                    
-                    set_innov(map, innov, link);
-                    
-                    link->weight = gaussian_random();
-                    link->enabled = true;
-                    
-                    insert(link);
-                }
+            auto it = set.find(&l);
+            if(it != set.end()) {
+                (*it)->enabled = !(*it)->enabled;
+            }else{
+                Link* link = new Link(l);
+                
+                set_innov(map, innov, link);
+                
+                link->weight = random() * randposneg() * 2.0f;
+                link->enabled = true;
+                
+                insert(link);
             }
         }
         
@@ -221,6 +251,16 @@ namespace NE {
         
         C->nodes.resize(size);
         
+        for(size_t i = 0; i < size; ++i) {
+            if(i < as && i < bs) {
+                C->nodes[i].bias = (A->nodes[i].bias + B->nodes[i].bias) * 0.5f;
+            }else if(i < as) {
+                C->nodes[i].bias = A->nodes[i].bias;
+            }else{
+                C->nodes[i].bias = B->nodes[i].bias;
+            }
+        }
+        
         C->fitness = (A->fitness + B->fitness) * 0.5f;
         
         std::vector<Link*>::const_iterator itA, itB;
@@ -229,110 +269,65 @@ namespace NE {
         itB = B->links.begin();
         
         while(itA != A->links.end() || itB != B->links.end()) {
+            Link link;
+            
             if(itA == A->links.end()) {
-                Link* link = new Link(**itB);
-                if((rand32() & 0xff) <= 0x1f) link->enabled = !link->enabled;
-                C->insert(link);
+                link = **itB;
                 ++itB;
-                continue;
-            }
-            
-            if(itB == B->links.end()) {
-                Link* link = new Link(**itA);
-                if((rand32() & 0xff) <= 0x1f) link->enabled = !link->enabled;
-                C->insert(link);
+            }else if(itB == B->links.end()) {
+                link = **itA;
                 ++itA;
-                continue;
-            }
-            
-            if((*itA)->innov == (*itB)->innov) {
-                Link* link = new Link(**itA);
-                link->weight = ((*itA)->weight + (*itB)->weight) * 0.5f;
+            }else if((*itA)->innov == (*itB)->innov) {
+                link = **itA;
+                link.weight = ((*itA)->weight + (*itB)->weight) * 0.5f;
                 
                 if((*itA)->enabled && (*itB)->enabled) {
-                    link->enabled = (rand32() & 0xff) <= 0x1f ? false : true;
+                    link.enabled = true;
                 }else if((*itA)->enabled) {
-                    link->enabled = (rand32() & 0xff) <= 0x7f ? true : false;
+                    link.enabled = (rand32() & 0xff) <= 0x7f ? true : false;
                 }else if((*itB)->enabled) {
-                    link->enabled = (rand32() & 0xff) <= 0x7f ? false : true;
+                    link.enabled = (rand32() & 0xff) <= 0x7f ? true : false;
                 }else{
-                    link->enabled = (rand32() & 0xff) <= 0x1f ? true : false;
+                    link.enabled = false;
                 }
-                
-                C->insert(link);
                 
                 ++itA;
                 ++itB;
             }else if((*itA)->innov < (*itB)->innov) {
-                Link* link = new Link(**itA);
-                if((rand32() & 0xff) <= 0x1f) link->enabled = !link->enabled;
-                C->insert(link);
+                link = **itA;
                 ++itA;
             }else{
-                Link* link = new Link(**itB);
-                if((rand32() & 0xff) <= 0x1f) link->enabled = !link->enabled;
-                C->insert(link);
+                link = **itB;
                 ++itB;
+            }
+            
+            auto it = C->set.find(&link);
+            if(it == C->set.end()) {
+                C->insert(new Link(link));
             }
         }
     }
     
-    float Network::distance_topology(const Network *A, const Network *B) {
+    float Network::distance(const Network *A, const Network *B) {
         std::vector<Link*>::const_iterator itA, itB;
         
         itA = A->links.begin();
         itB = B->links.begin();
         
         size_t miss = 0;
-        size_t n = 0;
-        
-        while(itA != A->links.end() || itB != B->links.end()) {
-            if(itA == A->links.end()) {
-                ++miss;
-                ++itB;
-                continue;
-            }
-            
-            if(itB == B->links.end()) {
-                ++miss;
-                ++itA;
-                continue;
-            }
-            
-            if((*itA)->innov == (*itB)->innov) {
-                ++n;
-                ++itA;
-                ++itB;
-            }else if((*itA)->innov < (*itB)->innov) {
-                ++miss;
-                ++itA;
-            }else{
-                ++miss;
-                ++itB;
-            }
-        }
-        
-        size_t N = miss + n;
-        return (N == 0 ? 0.0f : miss / (float) N);
-    }
-    
-    float Network::distance_weights(const Network *A, const Network *B) {
-        std::vector<Link*>::const_iterator itA, itB;
-        
-        itA = A->links.begin();
-        itB = B->links.begin();
-        
         float W = 0.0f;
         
         size_t n = 0;
         
         while(itA != A->links.end() || itB != B->links.end()) {
             if(itA == A->links.end()) {
+                ++miss;
                 ++itB;
                 continue;
             }
             
             if(itB == B->links.end()) {
+                ++miss;
                 ++itA;
                 continue;
             }
@@ -346,13 +341,15 @@ namespace NE {
                 ++itA;
                 ++itB;
             }else if((*itA)->innov < (*itB)->innov) {
+                ++miss;
                 ++itA;
             }else{
+                ++miss;
                 ++itB;
             }
         }
         
-        return (n == 0 ? 0.0f : sqrtf(W / (float) n));
+        return miss + (n == 0 ? 0.0f : sqrtf(W / (float) n));
     }
     
 }

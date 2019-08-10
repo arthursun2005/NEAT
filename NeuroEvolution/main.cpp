@@ -21,8 +21,6 @@ FILE* pos_file;
 int gens = 64;
 int pop = 256;
 
-int print_every = 1;
-
 int trials = 8;
 
 struct Obj
@@ -120,11 +118,15 @@ struct Pendulum : public Obj
     }
     
     void run() {
-        reset();
-        
-        for(int i = 0; i < time_limit; ++i) {
-            step(time_step);
+        for(int q = 0; q < trials; ++q) {
+            reset();
+            
+            for(int i = 0; i < time_limit; ++i) {
+                step(time_step);
+            }
         }
+        
+        reward /= (float) trials;
     }
     
 };
@@ -135,24 +137,26 @@ struct XOR : public Obj
     static const int output_size = 1;
     
     void run() {
-        int a = NE::rand32() & 1;
-        int b = NE::rand32() & 1;
-        int c = a ^ b;
-        
-        NE::Node* inputs = net->inputs();
-        NE::Node* outputs = net->outputs();
-        
-        inputs[0].value = a;
-        inputs[1].value = b;
-        
-        net->compute();
-        
-        float d = (outputs[0].value > 0.0f) - c;
-        reward += 1.0f - (d * d);
+        for(int n = 0; n < 100; ++n) {
+            int a = NE::rand32() & 1;
+            int b = NE::rand32() & 1;
+            int c = a ^ b;
+            
+            NE::Node* inputs = net->inputs();
+            NE::Node* outputs = net->outputs();
+            
+            inputs[0].value = a;
+            inputs[1].value = b;
+            
+            net->compute();
+            
+            float d = (outputs[0].value > 0.0f) - c;
+            reward += 1.0f - d * d;
+        }
     }
 };
 
-typedef Pendulum obj_type;
+typedef XOR obj_type;
 
 std::vector<obj_type> objs(pop);
 
@@ -181,11 +185,7 @@ int main(int argc, const char * argv[]) {
         for(int i = 0; i < pop; ++i) {
             objs[i].reward = 0.0f;
             
-            for(int q = 0; q < trials; ++q) {
-                objs[i].run();
-            }
-            
-            objs[i].reward /= (float) trials;
+            objs[i].run();
             
             objs[i].net->fitness = objs[i].reward;
         }
@@ -194,26 +194,25 @@ int main(int argc, const char * argv[]) {
         
         fprintf(log_file, "Generation %d: \n", n);
         
-        population.speciate();
-        
+        population.select();
         
         for(int i = 0; i < pop; ++i) {
-            //fprintf(log_file, "%5d # %5d: age %5zu %8.2f complexity %5zu size %5zu \n", n, i, population[i]->age, population[i]->fitness, population[i]->complexity(), population[i]->size());
+            fprintf(log_file, "%5d # %5d: age %5zu %6.2f complexity %5zu size %5zu \n", n, i, population[i]->age, population[i]->fitness, population[i]->complexity(), population[i]->size());
         }
         
         fprintf(log_file, "\n\n");
         
-        for(NE::Species& sp : population.species) {
-            fprintf(log_file, "Species %8.3f offsprings %5zu size %5zu \n", sp.avg_fitness, sp.offsprings, sp.networks.size());
+        for(NE::Species* sp : population.species) {
+            fprintf(log_file, "Species %6.2f offsprings %5zu size %5zu %5zu \n", sp->avg_fitness, sp->offsprings, sp->networks.size(), sp->time_since_improvement);
         }
         
         fprintf(log_file, "\n\n");
         
         best = population.reproduce();
         
-        fprintf(log_file, "best fitness %15.4f complexity %8zu size %8zu \n", best->fitness, best->complexity(), best->size());
+        fprintf(log_file, "best fitness %6.2f complexity %5zu size %5zu \n", best->fitness, best->complexity(), best->size());
         
-        fprintf(log_file, "%8zu\n", population.innovation);
+        fprintf(log_file, "%5zu\n", population.innovation);
         
         fflush(log_file);
     }
@@ -221,11 +220,6 @@ int main(int argc, const char * argv[]) {
     Pendulum p;
     p.net = best;
     p.reward = 0.0f;
-    
-    NE::Network* rd = population[0];
-    
-    NE::Network b;
-    NE::Network::crossover(best, rd, &b);
     
     p.reset();
     
