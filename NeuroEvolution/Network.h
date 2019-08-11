@@ -48,6 +48,18 @@ namespace NE {
             return links.size();
         }
         
+        void print(FILE* file) {
+            for(Node& node : nodes) {
+                fprintf(file, "Node %8.3f \n", node.value);
+            }
+            
+            fprintf(file, "\n");
+            
+            for(Link* link : links) {
+                fprintf(file, "Link %8.3f %5zu %5zu %5zu \n", link->weight, link->i, link->j, link->innov);
+            }
+        }
+        
         void reset(size_t inputs, size_t outputs);
         
         void compute();
@@ -60,7 +72,7 @@ namespace NE {
 
         float fitness;
         
-        float placement;
+        float rank;
                                 
         static void crossover(const Network* A, const Network* B, Network* C);
         
@@ -91,7 +103,11 @@ namespace NE {
     };
     
     inline bool network_sort (const Network* A, const Network* B) {
-        return A->placement > B->placement;
+        return A->fitness < B->fitness;
+    }
+    
+    inline bool network_sort_rank (const Network* A, const Network* B) {
+        return A->rank < B->rank;
     }
     
 }

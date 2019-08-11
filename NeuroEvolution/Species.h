@@ -21,12 +21,14 @@ namespace NE {
         float best_fitness;
         float max_fitness;
         
+        float rank;
+        
         size_t time_since_improvement;
         size_t offsprings;
     };
     
     inline bool species_sort (const Species* A, const Species* B) {
-        return A->avg_fitness > B->avg_fitness;
+        return A->rank > B->rank;
     }
     
 }

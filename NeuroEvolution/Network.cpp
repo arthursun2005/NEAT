@@ -32,22 +32,17 @@ namespace NE {
     }
     
     void Network::reset(size_t inputs, size_t outputs) {
-        nodes.resize(inputs + outputs);
+        input_size = inputs + 1;
+        output_size = outputs;
+        
+        nodes.resize(input_size + output_size);
         
         clear();
-        
-        input_size = inputs;
-        output_size = outputs;
         
         age = 0;
         
         for(size_t i = 0; i < input_size; ++i) {
             nodes[i].acts = 1;
-            nodes[i].bias = random() * randposneg() * 2.0f;
-        }
-        
-        for(size_t i = 0; i < output_size; ++i) {
-            nodes[input_size + i].bias = random() * randposneg() * 2.0f;
         }
     }
     
@@ -55,7 +50,7 @@ namespace NE {
         size_t size = nodes.size();
         
         for(size_t i = input_size; i < size; ++i) {
-            if(nodes[i].acts == 0)
+            if(nodes[i].acts < 2)
                 return true;
         }
         
@@ -65,10 +60,6 @@ namespace NE {
     void Network::compute() {
         size_t size = nodes.size();
         
-        for(size_t i = 0; i < input_size; ++i) {
-            nodes[i].value += nodes[i].bias;
-        }
-        
         for(size_t i = input_size; i < size; ++i) {
             nodes[i].acts = 0;
         }
@@ -76,7 +67,7 @@ namespace NE {
         size_t qf = input_size + output_size;
         
         size_t n = 0;
-        size_t lm = links.size();
+        size_t lm = 1 + links.size();
         
         while(outputs_off() && n != lm) {
             for(size_t i = input_size; i < size; ++i) {
@@ -98,9 +89,9 @@ namespace NE {
                     ++nodes[i].acts;
                     
                     if(i >= qf)
-                        nodes[i].value = nodes[i].function(nodes[i].sum + nodes[i].bias);
+                        nodes[i].value = nodes[i].function(nodes[i].sum);
                     else
-                        nodes[i].value = nodes[i].sum + nodes[i].bias;
+                        nodes[i].value = nodes[i].sum;
                 }
             }
             
@@ -109,9 +100,11 @@ namespace NE {
         
         for(Link* link : links) {
             if(link->enabled) {
-                //if(nodes[link->i].acts != 0 && nodes[link->j].acts != 0) {
-                    //link->weight = hebbian(link->weight, 0.0f, nodes[link->i].value, nodes[link->j].value, 0.00183884, 0.0158606, 0.0133358);
-                //}
+                if(nodes[link->i].acts != 0 && nodes[link->j].acts != 0) {
+                    //link->weight += 0.1f * nodes[link->i].value * nodes[link->j].value;
+                    //if(link->weight > 2.0f) link->weight = 2.0f;
+                    //if(link->weight < -2.0f) link->weight = -2.0f;
+                }
             }
         }
     }
@@ -141,17 +134,17 @@ namespace NE {
             if(random() < weights_reset_rate)
                 link->weight = 2.0f * random() * randposneg();
             
-            if(random() < weights_mutate_rate)
+            else if(random() < weights_mutate_rate)
                 link->weight += weights_mutation_power * random() * randposneg();
         }
         
-        for(Node& node : nodes) {
-            if(random() < weights_reset_rate)
-                node.bias = 2.0f * random() * randposneg();
-            
-            if(random() < weights_mutate_rate)
-                node.bias +=weights_mutation_power *  random() * randposneg();
-        }
+        Node& node = nodes[input_size - 1];
+        
+        if(random() < weights_reset_rate)
+            node.value = 2.0f * random() * randposneg();
+        
+        else if(random() < weights_mutate_rate)
+            node.value += weights_mutation_power * random() * randposneg();
     }
     
     void Network::mutate_topology(innov_map *map, size_t *innov) {
@@ -160,15 +153,13 @@ namespace NE {
         
         uint32_t k = rand32() & 0xffff;
         
-        if(k <= 0x0fff && ls != 0) {
+        if(k <= 0x7fff && ls != 0) {
             Link* link = links[rand64() % ls];
             size_t node = create_node();
             
             if(!link->enabled) return;
             
             link->enabled = false;
-            
-            nodes[node].bias = 0.0f;
             
             {
                 Link* link1 = new Link();
@@ -177,7 +168,7 @@ namespace NE {
                 
                 set_innov(map, innov, link1);
                 
-                link1->weight = 1.0f;
+                link1->weight = 2.0f * random() * randposneg();
                 link1->enabled = true;
                 
                 insert(link1);
@@ -229,12 +220,11 @@ namespace NE {
     }
     
     Network& Network::operator = (const Network &network) {
-        reset(network.input_size, network.output_size);
+        reset(network.input_size - 1, network.output_size);
         
         nodes = network.nodes;
         
         fitness = network.fitness;
-        age = network.age;
         
         for(Link* link : network.links) {
             insert(new Link(*link));
@@ -244,21 +234,19 @@ namespace NE {
     }
     
     void Network::crossover(const Network* A, const Network* B, Network* C) {
-        C->reset(A->input_size, B->output_size);
+        C->reset(A->input_size - 1, B->output_size);
         
         size_t as = A->nodes.size(), bs = B->nodes.size();
         size_t size = std::max(as, bs);
         
         C->nodes.resize(size);
         
-        for(size_t i = 0; i < size; ++i) {
-            if(i < as && i < bs) {
-                C->nodes[i].bias = (A->nodes[i].bias + B->nodes[i].bias) * 0.5f;
-            }else if(i < as) {
-                C->nodes[i].bias = A->nodes[i].bias;
-            }else{
-                C->nodes[i].bias = B->nodes[i].bias;
-            }
+        bool avg = random() < mate_avg_rate;
+        
+        {
+            size_t i = C->input_size - 1;
+            if(avg) C->nodes[i].value = (A->nodes[i].value + B->nodes[i].value) * 0.5f;
+            else C->nodes[i].value = (rand32() & 1) ? A->nodes[i].value : B->nodes[i].value;
         }
         
         C->fitness = (A->fitness + B->fitness) * 0.5f;
@@ -279,7 +267,9 @@ namespace NE {
                 ++itA;
             }else if((*itA)->innov == (*itB)->innov) {
                 link = **itA;
-                link.weight = ((*itA)->weight + (*itB)->weight) * 0.5f;
+                
+                if(avg) link.weight = ((*itA)->weight + (*itB)->weight) * 0.5f;
+                else link.weight = (rand32() & 1) ? (*itA)->weight : (*itB)->weight;
                 
                 if((*itA)->enabled && (*itB)->enabled) {
                     link.enabled = true;
@@ -349,7 +339,8 @@ namespace NE {
             }
         }
         
-        return miss + (n == 0 ? 0.0f : sqrtf(W / (float) n));
+        size_t N = miss + n;
+        return (N == 0 ? 0.0f : miss / (float) N) + (n == 0 ? 0.0f : sqrtf(W / (float) n));
     }
     
 }

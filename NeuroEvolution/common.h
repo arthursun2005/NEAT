@@ -16,8 +16,8 @@
 
 namespace NE {
     
-    static float weights_power = 3.0f;
-    static float similar_rate = 4.0f;
+    static float weights_power = 1.0f;
+    static float similar_rate = 2.0f;
     static float survival_thresh = 0.5f;
     static float interspecies_mate_rate = 0.01f;
     static float mutate_topology_rate = 0.2f;
@@ -26,6 +26,7 @@ namespace NE {
     static float weights_reset_rate = 0.1f;
     static float weights_mutate_rate = 0.75f;
     static float weights_mutation_power = 2.0f;
+    static float mate_avg_rate = 0.5f;
     static size_t dead_species_rate = 16;
     
     inline uint32_t rand32() {

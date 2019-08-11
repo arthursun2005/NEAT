@@ -40,8 +40,6 @@ namespace NE {
         float value;
         float sum;
         
-        float bias;
-                
         Function function;
         
         size_t acts;

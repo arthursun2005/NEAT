@@ -62,25 +62,27 @@ namespace NE {
             
             size_t offsprings = 0;
             size_t allowed_offsprings = roundf(size * (1.0f - survival_thresh));
-            float total_fitness = 0.0f;
+            float total_rank = 0.0f;
             
             best_fitness = -FLT_MAX;
+            
+            std::sort(networks.data(), networks.data() + size, network_sort);
+            
+            for(size_t i = 0; i < size; ++i) {
+                networks[i]->rank = (float) i;
+            }
             
             for(Species* sp : species) {
                 sp->avg_fitness = 0.0f;
                 sp->best_fitness = -FLT_MAX;
+                sp->rank = 0.0f;
                 
                 for(Network* n : sp->networks) {
-                    if(n->fitness < 0.0f) n->placement = 0.0f;
-                    else n->placement = n->fitness;
-                    
-                    sp->best_fitness = std::max(sp->best_fitness, n->placement);
-                    
-                    n->placement /= (float) sp->networks.size();
-                    
-                    sp->avg_fitness += n->placement;
+                    sp->best_fitness = std::max(sp->best_fitness, n->fitness);
+                    sp->avg_fitness += n->fitness;
+                    sp->rank += n->rank;
                 }
-
+                
                 if(sp->best_fitness > sp->max_fitness) {
                     sp->max_fitness = sp->best_fitness;
                     sp->time_since_improvement = 0;
@@ -91,25 +93,29 @@ namespace NE {
                 if(sp->best_fitness > best_fitness) {
                     best_fitness = sp->best_fitness;
                 }
+                
+                float spsize = (float) sp->networks.size();
+                
+                sp->avg_fitness /= spsize;
+                sp->rank /= spsize;
             }
             
             for(Species* sp : species) {
                 if(sp->time_since_improvement >= dead_species_rate && sp->best_fitness < best_fitness) {
                     for(Network* n : sp->networks) {
-                        n->placement = 0.0f;
-                        sp->avg_fitness = 0.0f;
-                        sp->time_since_improvement = 0;
+                        n->rank = 0.0f;
                     }
+                    sp->rank = 0.0f;
                 }
                 
-                total_fitness += sp->avg_fitness;
+                total_rank += sp->rank;
             }
             
             std::sort(species.data(), species.data() + species.size(), species_sort);
             
-            for(Species* s : species) {
-                s->offsprings = floorf(allowed_offsprings * (s->avg_fitness / total_fitness));
-                offsprings += s->offsprings;
+            for(Species* sp : species) {
+                sp->offsprings = floorf(allowed_offsprings * (sp->rank / total_rank));
+                offsprings += sp->offsprings;
             }
             
             size_t over = allowed_offsprings - offsprings;
@@ -128,48 +134,51 @@ namespace NE {
             
             size_t size = networks.size();
             
-            std::vector<Network> ns;
+            std::vector<Network*> ns;
             
             for(Species* sp : species) {
                 size_t spsize = sp->networks.size();
+                
                 for(size_t n = 0; n < sp->offsprings; ++n) {
-                    Network baby;
+                    Network* baby = new Network();
                     
                     size_t i1 = random() * spsize;
                     
                     if(random() < mate_rate) {
                         if(random() < interspecies_mate_rate) {
                             size_t i2 = random() * size;
-                            
-                            Network::crossover(sp->networks[i1], networks[i2], &baby);
+                            Network::crossover(sp->networks[i1], networks[i2], baby);
                         }else{
                             size_t i2 = random() * spsize;
-                            
-                            Network::crossover(sp->networks[i1], sp->networks[i2], &baby);
+                            Network::crossover(sp->networks[i1], sp->networks[i2], baby);
                         }
                     }else{
-                        baby = *sp->networks[i1];
+                        *baby = *sp->networks[i1];
                     }
                     
                     if(random() < mutate_weights_rate) {
-                        baby.mutate_weights();
+                        baby->mutate_weights();
                     }
                     
                     if(random() < mutate_topology_rate) {
-                        baby.mutate_topology(&map, &innovation);
+                        baby->mutate_topology(&map, &innovation);
                     }
-                    
+                                                            
                     ns.push_back(baby);
                 }
             }
             
             size_t q = ns.size();
-            std::sort(networks.data(), networks.data() + size, network_sort);
+            std::sort(networks.data(), networks.data() + size, network_sort_rank);
             
             for(size_t i = 0; i < q; ++i) {
-                _remove(networks[size - i - 1]);
-                *(networks[size - i - 1]) = ns[i];
-                _add(networks[size - i - 1]);
+                Network*& net = networks[i];
+                
+                _remove(net);
+                delete net;
+                
+                net = ns[i];
+                _add(net);
             }
             
             size_t idx = 0;

@@ -28,11 +28,9 @@ struct Obj
     static const int input_size;
     static const int output_size;
     
-    NE::Network* net;
-    
     float reward;
     
-    virtual void run() = 0;
+    virtual void run(NE::Network* net) = 0;
 };
 
 struct Pendulum : public Obj
@@ -75,7 +73,7 @@ struct Pendulum : public Obj
         va = NE::gaussian_random() * stdev;
     }
     
-    void step(float dt) {
+    void step(float dt, NE::Network* net) {
         NE::Node* inputs = net->inputs();
         NE::Node* outputs = net->outputs();
         
@@ -117,12 +115,12 @@ struct Pendulum : public Obj
         reward += 0.5f * (cosf(a) + 1.0f) * (cosf(q * M_PI * 0.5f));
     }
     
-    void run() {
+    void run(NE::Network* net) {
         for(int q = 0; q < trials; ++q) {
             reset();
             
             for(int i = 0; i < time_limit; ++i) {
-                step(time_step);
+                step(time_step, net);
             }
         }
         
@@ -136,37 +134,33 @@ struct XOR : public Obj
     static const int input_size = 2;
     static const int output_size = 1;
     
-    void run() {
-        for(int n = 0; n < 100; ++n) {
-            int a = NE::rand32() & 1;
-            int b = NE::rand32() & 1;
-            int c = a ^ b;
-            
-            NE::Node* inputs = net->inputs();
-            NE::Node* outputs = net->outputs();
-            
-            inputs[0].value = a;
-            inputs[1].value = b;
-            
-            net->compute();
-            
-            float d = (outputs[0].value > 0.0f) - c;
-            reward += 1.0f - d * d;
+    void run(NE::Network* net) {
+        for(int a = 0; a < 2; ++a) {
+            for(int b = 0; b < 2; ++b) {
+                int c = a ^ b;
+                
+                NE::Node* inputs = net->inputs();
+                NE::Node* outputs = net->outputs();
+                
+                inputs[0].value = a;
+                inputs[1].value = b;
+                
+                net->compute();
+                
+                float d = (outputs[0].value >= 1.0f) - c;
+                reward += 1.0f - d * d;
+            }
         }
     }
 };
 
-typedef XOR obj_type;
+typedef Pendulum obj_type;
 
 std::vector<obj_type> objs(pop);
 
 void initialize() {
     population.resize(pop);
     population.reset(obj_type::input_size, obj_type::output_size);
-    
-    for(int i = 0; i < pop; ++i) {
-        objs[i].net = population[i];
-    }
 }
 
 int main(int argc, const char * argv[]) {
@@ -185,9 +179,9 @@ int main(int argc, const char * argv[]) {
         for(int i = 0; i < pop; ++i) {
             objs[i].reward = 0.0f;
             
-            objs[i].run();
+            objs[i].run(population[i]);
             
-            objs[i].net->fitness = objs[i].reward;
+            population[i]->fitness = objs[i].reward;
         }
         
         fprintf(log_file, "\n\n\n");
@@ -214,17 +208,18 @@ int main(int argc, const char * argv[]) {
         
         fprintf(log_file, "%5zu\n", population.innovation);
         
+        best->print(log_file);
+        
         fflush(log_file);
     }
     
     Pendulum p;
-    p.net = best;
     p.reward = 0.0f;
     
     p.reset();
     
     for(int i = 0; i < time_limit; ++i) {
-        p.step(time_step);
+        p.step(time_step, best);
         
         fprintf(pos_file, "%f, %f, \n", p.x, p.a);
     }
