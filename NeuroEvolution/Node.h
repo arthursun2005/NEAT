@@ -44,6 +44,7 @@ namespace NE {
         
         size_t acts;
         bool computed;
+        bool enabled;
     };
     
     inline size_t hashi2(size_t i, size_t j) {

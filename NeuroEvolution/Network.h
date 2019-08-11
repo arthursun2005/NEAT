@@ -56,7 +56,7 @@ namespace NE {
             fprintf(file, "\n");
             
             for(Link* link : links) {
-                fprintf(file, "Link %8.3f %5zu %5zu %5zu \n", link->weight, link->i, link->j, link->innov);
+                fprintf(file, "Link %8.3f %5zu %5zu %5zu %d \n", link->weight, link->i, link->j, link->innov, link->enabled);
             }
         }
         
@@ -68,7 +68,13 @@ namespace NE {
         
         void mutate_weights();
                 
-        void mutate_topology(innov_map* map, size_t* innov);
+        void mutate_topology_add_node(innov_map* map, size_t* innov);
+        
+        void mutate_topology_add_link(innov_map* map, size_t* innov);
+        
+        void mutate_toggle_link_enable(size_t times);
+        
+        void mutate_toggle_node_enable(size_t times);
 
         float fitness;
         

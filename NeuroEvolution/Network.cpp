@@ -43,6 +43,11 @@ namespace NE {
         
         for(size_t i = 0; i < input_size; ++i) {
             nodes[i].acts = 1;
+            nodes[i].enabled = true;
+        }
+        
+        for(size_t i = 0; i < output_size; ++i) {
+            nodes[input_size + i].enabled = true;
         }
     }
     
@@ -50,7 +55,7 @@ namespace NE {
         size_t size = nodes.size();
         
         for(size_t i = input_size; i < size; ++i) {
-            if(nodes[i].acts < 2)
+            if(nodes[i].acts == 0)
                 return true;
         }
         
@@ -67,7 +72,7 @@ namespace NE {
         size_t qf = input_size + output_size;
         
         size_t n = 0;
-        size_t lm = 1 + links.size();
+        size_t lm = links.size();
         
         while(outputs_off() && n != lm) {
             for(size_t i = input_size; i < size; ++i) {
@@ -85,7 +90,7 @@ namespace NE {
             }
             
             for(size_t i = input_size; i < size; ++i) {
-                if(nodes[i].computed) {
+                if(nodes[i].computed && nodes[i].enabled) {
                     ++nodes[i].acts;
                     
                     if(i >= qf)
@@ -96,16 +101,6 @@ namespace NE {
             }
             
             ++n;
-        }
-        
-        for(Link* link : links) {
-            if(link->enabled) {
-                if(nodes[link->i].acts != 0 && nodes[link->j].acts != 0) {
-                    //link->weight += 0.1f * nodes[link->i].value * nodes[link->j].value;
-                    //if(link->weight > 2.0f) link->weight = 2.0f;
-                    //if(link->weight < -2.0f) link->weight = -2.0f;
-                }
-            }
         }
     }
     
@@ -131,62 +126,69 @@ namespace NE {
     
     void Network::mutate_weights() {
         for(Link* link : links) {
-            if(random() < weights_reset_rate)
-                link->weight = 2.0f * random() * randposneg();
+            if(random() < weights_reset_prob)
+                link->weight = gaussian_random();
             
-            else if(random() < weights_mutate_rate)
+            else if(random() < weights_mutate_prob)
                 link->weight += weights_mutation_power * random() * randposneg();
         }
         
         Node& node = nodes[input_size - 1];
         
-        if(random() < weights_reset_rate)
-            node.value = 2.0f * random() * randposneg();
+        if(random() < weights_reset_prob)
+            node.value = gaussian_random();
         
-        else if(random() < weights_mutate_rate)
+        else if(random() < weights_mutate_prob)
             node.value += weights_mutation_power * random() * randposneg();
     }
     
-    void Network::mutate_topology(innov_map *map, size_t *innov) {
-        size_t size = nodes.size();
+    void Network::mutate_topology_add_node(innov_map *map, size_t *innov) {
         size_t ls = links.size();
         
-        uint32_t k = rand32() & 0xffff;
+        if(ls != 0) {
+            for(size_t n = 0; n < timeout; ++n) {
+                Link* link = links[rand64() % ls];
+                size_t node = create_node();
+                
+                if(!link->enabled) continue;
+                
+                link->enabled = false;
+                
+                {
+                    Link* link1 = new Link();
+                    link1->i = link->i;
+                    link1->j = node;
+                    
+                    set_innov(map, innov, link1);
+                    
+                    link1->weight = 1.0f;
+                    link1->enabled = true;
+                    
+                    insert(link1);
+                }
+                
+                {
+                    Link* link2 = new Link();
+                    link2->i = node;
+                    link2->j = link->j;
+                    
+                    set_innov(map, innov, link2);
+                    
+                    link2->weight = link->weight;
+                    link2->enabled = true;
+                    
+                    insert(link2);
+                }
+                
+                break;
+            }
+        }
+    }
+    
+    void Network::mutate_topology_add_link(innov_map *map, size_t *innov) {
+        size_t size = nodes.size();
         
-        if(k <= 0x7fff && ls != 0) {
-            Link* link = links[rand64() % ls];
-            size_t node = create_node();
-            
-            if(!link->enabled) return;
-            
-            link->enabled = false;
-            
-            {
-                Link* link1 = new Link();
-                link1->i = link->i;
-                link1->j = node;
-                
-                set_innov(map, innov, link1);
-                
-                link1->weight = 2.0f * random() * randposneg();
-                link1->enabled = true;
-                
-                insert(link1);
-            }
-            
-            {
-                Link* link2 = new Link();
-                link2->i = node;
-                link2->j = link->j;
-                
-                set_innov(map, innov, link2);
-                
-                link2->weight = link->weight;
-                link2->enabled = true;
-                
-                insert(link2);
-            }
-        }else{
+        for(size_t n = 0; n < timeout; ++n) {
             size_t i = rand64() % size;
             size_t j = input_size + (rand64() % (size - input_size));
             
@@ -196,22 +198,41 @@ namespace NE {
             
             auto it = set.find(&l);
             if(it != set.end()) {
-                (*it)->enabled = !(*it)->enabled;
+                continue;
             }else{
                 Link* link = new Link(l);
                 
                 set_innov(map, innov, link);
                 
-                link->weight = random() * randposneg() * 2.0f;
+                link->weight = gaussian_random();
                 link->enabled = true;
                 
                 insert(link);
             }
+            
+            break;
         }
+    }
+    
+    void Network::mutate_toggle_link_enable(size_t times) {
+        size_t ls = links.size();
         
         if(ls != 0) {
-            Link* link = links[rand64() % ls];
-            link->enabled = !link->enabled;
+            for(size_t n = 0; n < times; ++n) {
+                Link* link = links[rand64() % ls];
+                link->enabled = !link->enabled;
+            }
+        }
+    }
+    
+    void Network::mutate_toggle_node_enable(size_t times) {
+        size_t ns = nodes.size() - input_size - output_size;
+        
+        if(ns != 0) {
+            for(size_t n = 0; n < times; ++n) {
+                Node& node = nodes[rand64() % ns];
+                node.enabled = !node.enabled;
+            }
         }
     }
     
@@ -241,7 +262,25 @@ namespace NE {
         
         C->nodes.resize(size);
         
-        bool avg = random() < mate_avg_rate;
+        for(size_t i = 0; i < size; ++i) {
+            if(i < as && i < bs) {
+                if(A->nodes[i].enabled && B->nodes[i].enabled) {
+                    C->nodes[i].enabled = true;
+                }else if(A->nodes[i].enabled) {
+                    C->nodes[i].enabled = random() < disable_inheritance ? false : true;
+                }else if(B->nodes[i].enabled) {
+                    C->nodes[i].enabled = random() < disable_inheritance ? false : true;
+                }else{
+                    C->nodes[i].enabled = false;
+                }
+            }else if(i < as) {
+                C->nodes[i].enabled = A->nodes[i].enabled;
+            }else{
+                C->nodes[i].enabled = B->nodes[i].enabled;
+            }
+        }
+        
+        bool avg = random() < mate_avg_prob;
         
         {
             size_t i = C->input_size - 1;
@@ -274,9 +313,9 @@ namespace NE {
                 if((*itA)->enabled && (*itB)->enabled) {
                     link.enabled = true;
                 }else if((*itA)->enabled) {
-                    link.enabled = (rand32() & 0xff) <= 0x7f ? true : false;
+                    link.enabled = random() < disable_inheritance ? false : true;
                 }else if((*itB)->enabled) {
-                    link.enabled = (rand32() & 0xff) <= 0x7f ? true : false;
+                    link.enabled = random() < disable_inheritance ? false : true;
                 }else{
                     link.enabled = false;
                 }
@@ -294,6 +333,8 @@ namespace NE {
             auto it = C->set.find(&link);
             if(it == C->set.end()) {
                 C->insert(new Link(link));
+            }else{
+                (*it)->weight = ((*it)->weight + link.weight) * 0.5f;
             }
         }
     }
@@ -306,9 +347,7 @@ namespace NE {
         
         size_t miss = 0;
         float W = 0.0f;
-        
-        size_t n = 0;
-        
+                
         while(itA != A->links.end() || itB != B->links.end()) {
             if(itA == A->links.end()) {
                 ++miss;
@@ -323,10 +362,7 @@ namespace NE {
             }
             
             if((*itA)->innov == (*itB)->innov) {
-                float d = (*itA)->weight - (*itB)->weight;
-                
-                W += d * d;
-                ++n;
+                W += fabsf((*itA)->weight - (*itB)->weight);
                 
                 ++itA;
                 ++itB;
@@ -339,8 +375,7 @@ namespace NE {
             }
         }
         
-        size_t N = miss + n;
-        return (N == 0 ? 0.0f : miss / (float) N) + (n == 0 ? 0.0f : sqrtf(W / (float) n));
+        return (miss + weights_power * W) / (float) std::max(A->links.size(), B->links.size());
     }
     
 }

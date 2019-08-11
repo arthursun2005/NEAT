@@ -93,11 +93,11 @@ struct Pendulum : public Obj
         action = action < -1.0f ? -1.0f : (action > 1.0f ? 1.0f : action);
         
         action *= f;
-                
+        
         float va2 = va * va;
         float sc = s * c;
         float c2 = c * c;
-        
+
         float vvx = (-2.0f * m_p * l * va2 * s + 3.0f * m_p * g * sc + 4.0f * action - 4.0f * b * vx) / (4.0f * m - 3.0f * m_p * c2);
         float vva = (-3.0f * m_p * l * va2 * sc + 6.0f * m * g * s + 6.0f * (action - b * vx) * c) / (4.0f * l * m - 3.0f * m_p * l * c2);
         
@@ -109,10 +109,14 @@ struct Pendulum : public Obj
         
         float q = x / xt;
         
-        q = q > 1.0f ? 1.0f : q;
-        q = q < -1.0f ? -1.0f : q;
+        //q = q > 1.0f ? 1.0f : q;
+        //q = q < -1.0f ? -1.0f : q;
         
-        reward += 0.5f * (cosf(a) + 1.0f) * (cosf(q * M_PI * 0.5f));
+        //reward += 0.5f * (cosf(a) + 1.0f) * (cosf(q * M_PI * 0.5f));
+        
+        if(q > -1.0f && q < 1.0f) {
+            reward += 0.5f * (cosf(a) + 1.0f);
+        }
     }
     
     void run(NE::Network* net) {
@@ -188,7 +192,7 @@ int main(int argc, const char * argv[]) {
         
         fprintf(log_file, "Generation %d: \n", n);
         
-        population.select();
+        best = population.select();
         
         for(int i = 0; i < pop; ++i) {
             fprintf(log_file, "%5d # %5d: age %5zu %6.2f complexity %5zu size %5zu \n", n, i, population[i]->age, population[i]->fitness, population[i]->complexity(), population[i]->size());
@@ -202,8 +206,6 @@ int main(int argc, const char * argv[]) {
         
         fprintf(log_file, "\n\n");
         
-        best = population.reproduce();
-        
         fprintf(log_file, "best fitness %6.2f complexity %5zu size %5zu \n", best->fitness, best->complexity(), best->size());
         
         fprintf(log_file, "%5zu\n", population.innovation);
@@ -211,6 +213,8 @@ int main(int argc, const char * argv[]) {
         best->print(log_file);
         
         fflush(log_file);
+        
+        population.reproduce();
     }
     
     Pendulum p;
