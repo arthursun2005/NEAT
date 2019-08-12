@@ -135,19 +135,19 @@ void ne_network::insert(ne_link *link) {
 
 void ne_network::mutate_weights(const ne_params& params) {
     for(ne_link* link : links) {
-        if(random() < params.weights_reset_prob)
+        if(ne_random() < params.weights_reset_prob)
             link->weight = gaussian_random();
         
-        else if(random() < params.weights_mutate_prob)
+        else if(ne_random() < params.weights_mutate_prob)
             link->weight += ne_random(-params.weights_mutation_power, params.weights_mutation_power);
     }
     
     ne_node& node = nodes[input_size - 1];
     
-    if(random() <params. weights_reset_prob)
+    if(ne_random() <params. weights_reset_prob)
         node.value = gaussian_random();
     
-    else if(random() < params.weights_mutate_prob)
+    else if(ne_random() < params.weights_mutate_prob)
         node.value +=  ne_random(-params.weights_mutation_power, params.weights_mutation_power);
 }
 
@@ -157,9 +157,10 @@ void ne_network::mutate_topology_add_node(innov_map *map, size_t *innov, const n
     if(ls != 0) {
         for(size_t n = 0; n < params.timeout; ++n) {
             ne_link* link = links[rand64() % ls];
-            size_t node = create_node();
             
             if(!link->enabled) continue;
+            
+            size_t node = create_node();
             
             link->enabled = false;
             

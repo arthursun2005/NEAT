@@ -64,7 +64,11 @@ public:
     
     float fitness;
     
+    float adjusted_fitness;
+    
     float rank;
+    
+    bool killed;
     
     static void crossover(const ne_network* A, const ne_network* B, ne_network* C, const ne_params& params);
     
@@ -94,12 +98,34 @@ protected:
     
 };
 
+inline bool ne_network_sort_adjusted_fitness (const ne_network* A, const ne_network* B) {
+    return A->adjusted_fitness < B->adjusted_fitness;
+}
+
 inline bool ne_network_sort_fitness (const ne_network* A, const ne_network* B) {
     return A->fitness < B->fitness;
 }
 
 inline bool ne_network_sort_rank (const ne_network* A, const ne_network* B) {
     return A->rank < B->rank;
+}
+
+inline void ne_mutate_network(ne_network* network, const ne_params& params, innov_map* map, size_t* innov) {
+    if(ne_random() < params.mutate_weights_prob) {
+        network->mutate_weights(params);
+    }
+    
+    if(ne_random() < params.new_node_prob) {
+        network->mutate_topology_add_node(map, innov, params);
+    }
+    
+    if(ne_random() < params.new_link_prob) {
+        network->mutate_topology_add_link(map, innov, params);
+    }
+    
+    if(ne_random() < params.toggle_link_enable_prob) {
+        network->mutate_toggle_link_enable(1);
+    }
 }
     
 

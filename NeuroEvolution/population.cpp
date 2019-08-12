@@ -8,25 +8,76 @@
 
 #include "population.h"
 
+ne_network* ne_population::_breed(ne_species *sp) {
+    ne_network* baby = new ne_network();
+    
+    size_t i1 = sp->midpoint + (size_t)(ne_random() * sp->alive_size);
+    
+    if(ne_random() < params.mate_prob) {
+        if(ne_random() < params.interspecies_mate_prob) {
+            size_t i2 = midpoint + (size_t)(ne_random() * alive_size);
+            ne_network::crossover(sp->networks[i1], networks[i2], baby, params);
+        }else{
+            size_t i2 = sp->midpoint + (size_t)(ne_random() * sp->alive_size);
+            ne_network::crossover(sp->networks[i1], sp->networks[i2], baby, params);
+        }
+    }else{
+        *baby = *sp->networks[i1];
+    }
+    
+    ne_mutate_network(baby, params, &map, &innovation);
+    
+    return baby;
+}
+
 ne_network* ne_population::select() {
     size_t size = networks.size();
     
     size_t offsprings = 0;
-    size_t allowed_offsprings = roundf(size * params.kill_thresh);
+    
     float total_rank = 0.0f;
     
     best_fitness = -FLT_MAX;
     
-    std::sort(networks.data(), networks.data() + size, ne_network_sort_fitness);
+    midpoint = 0;
     
+    for(ne_species* sp : species) {
+        size_t spsize = sp->networks.size();
+        float inv_size = 1.0f / (float) spsize;
+        
+        std::sort(sp->networks.data(), sp->networks.data() + spsize, ne_network_sort_fitness);
+        
+        sp->midpoint = spsize / 2;
+        sp->alive_size = spsize - sp->midpoint;
+        
+        for(size_t i = 0; i != sp->midpoint; ++i) {
+            sp->networks[i]->adjusted_fitness = 0.0f;
+            ++midpoint;
+        }
+        
+        for(size_t i = sp->midpoint; i != spsize; ++i) {
+            sp->networks[i]->adjusted_fitness = sp->networks[i]->fitness * inv_size;
+        }
+    }
+    
+    std::sort(networks.data(), networks.data() + size, ne_network_sort_adjusted_fitness);
+    
+    float rank = 0.0f;
+    float last_fitness = -FLT_MAX;
     for(size_t i = 0; i < size; ++i) {
-        networks[i]->rank = (float) i;
+        if(networks[i]->adjusted_fitness > last_fitness) {
+            rank += 1.0f;
+        }
+        
+        networks[i]->rank = rank;
     }
     
     for(ne_species* sp : species) {
         sp->avg_fitness = 0.0f;
         sp->best_fitness = -FLT_MAX;
         sp->rank = 0.0f;
+        
+        float inv_size = 1.0f / (float) sp->networks.size();
         
         for(ne_network* n : sp->networks) {
             sp->best_fitness = std::max(sp->best_fitness, n->fitness);
@@ -45,32 +96,16 @@ ne_network* ne_population::select() {
             best_fitness = sp->best_fitness;
         }
         
-        float spsize = (float) sp->networks.size();
-        
-        sp->avg_fitness /= spsize;
-        sp->rank /= spsize;
+        sp->avg_fitness *= inv_size;
+        sp->rank *= inv_size;
     }
     
     for(ne_species* sp : species) {
-        size_t spsize = sp->networks.size();
-        
-        std::sort(sp->networks.data(), sp->networks.data() + spsize, ne_network_sort_fitness);
-        
-        float inv_size = 1.0f / (float) spsize;
-        
-        sp->midpoint = spsize * params.kill_thresh;
-        
-        for(size_t i = 0; i < sp->midpoint; ++i) {
-            sp->networks[i]->rank = 0.0f;
-        }
-        
-        for(size_t i = sp->midpoint; i < spsize; ++i) {
-            sp->networks[i]->rank = sp->networks[i]->fitness * inv_size;
-        }
-        
         if(sp->time_since_improvement >= params.dead_species_age && sp->best_fitness < best_fitness) {
-            for(ne_network* n : sp->networks) {
-                n->rank = 0.0f;
+            size_t spsize = sp->networks.size();
+            for(size_t i = sp->midpoint; i != spsize; ++i) {
+                sp->networks[i]->adjusted_fitness = 0.0f;
+                ++midpoint;
             }
             
             sp->rank = 0.0f;
@@ -82,11 +117,11 @@ ne_network* ne_population::select() {
     std::sort(species.data(), species.data() + species.size(), ne_species_sort);
     
     for(ne_species* sp : species) {
-        sp->offsprings = floorf(allowed_offsprings * (sp->rank / total_rank));
+        sp->offsprings = floorf(midpoint * (sp->rank / total_rank));
         offsprings += sp->offsprings;
     }
     
-    size_t over = allowed_offsprings - offsprings;
+    size_t over = midpoint - offsprings;
     
     while(over != 0) {
         for(ne_species* sp : species) {
@@ -104,6 +139,8 @@ ne_network* ne_population::select() {
         }
     }
     
+    alive_size = size - midpoint;
+    
     return networks.back();
 }
 
@@ -115,47 +152,13 @@ void ne_population::reproduce() {
     std::vector<ne_network*> ns;
     
     for(ne_species* sp : species) {
-        size_t spsize = sp->networks.size() - sp->midpoint;
-        
-        for(size_t n = 0; n < sp->offsprings; ++n) {
-            ne_network* baby = new ne_network();
-            
-            size_t i1 = sp->midpoint + (size_t)(ne_random() * spsize);
-            
-            if(ne_random() < params.mate_prob) {
-                if(ne_random() < params.interspecies_mate_prob) {
-                    size_t i2 = ne_random() * size;
-                    ne_network::crossover(sp->networks[i1], networks[i2], baby, params);
-                }else{
-                    size_t i2 = sp->midpoint + (size_t)(ne_random() * spsize);
-                    ne_network::crossover(sp->networks[i1], sp->networks[i2], baby, params);
-                }
-            }else{
-                *baby = *sp->networks[i1];
-            }
-            
-            if(ne_random() < params.mutate_weights_prob) {
-                baby->mutate_weights(params);
-            }
-            
-            if(ne_random() < params.new_node_prob) {
-                baby->mutate_topology_add_node(&map, &innovation, params);
-            }
-            
-            if(ne_random() < params.new_link_prob) {
-                baby->mutate_topology_add_link(&map, &innovation, params);
-            }
-            
-            if(ne_random() < params.toggle_link_enable_prob) {
-                baby->mutate_toggle_link_enable(1);
-            }
-            
-            ns.push_back(baby);
+        for(size_t n = 0; n != sp->offsprings; ++n) {
+            ns.push_back(_breed(sp));
         }
     }
     
     size_t q = ns.size();
-    std::sort(networks.data(), networks.data() + size, ne_network_sort_rank);
+    std::sort(networks.data(), networks.data() + size, ne_network_sort_adjusted_fitness);
     
     for(size_t i = 0; i < q; ++i) {
         ne_network*& net = networks[i];
@@ -186,16 +189,14 @@ void ne_population::_add(ne_network* n) {
     }
     
     if(sp == nullptr) {
-        ne_species* sp = new ne_species();
-        sp->networks.push_back(n);
+        sp = new ne_species();
         sp->time_since_improvement = 0;
         sp->max_fitness = -FLT_MAX;
-        n->sp = sp;
         species.push_back(sp);
-    }else{
-        sp->networks.push_back(n);
-        n->sp = sp;
     }
+    
+    n->sp = sp;
+    sp->networks.push_back(n);
 }
 
 void ne_population::_remove(ne_network* n) {

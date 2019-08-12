@@ -72,11 +72,20 @@ private:
     
     innov_map map;
     
+    size_t midpoint;
+    size_t alive_size;
+    
+    ne_network* _breed(ne_species* sp);
+    
     void _add(ne_network* n);
     
     void _remove(ne_network* n);
     
     inline void _speciate() {
+        for(ne_species* sp : species) {
+            delete sp;
+        }
+        
         species.clear();
         
         for(ne_network* n : networks) {

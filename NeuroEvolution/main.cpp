@@ -7,7 +7,7 @@
 //
 
 #include <iostream>
-#include "Population.h"
+#include "population.h"
 
 ne_population population;
 
@@ -65,7 +65,7 @@ struct Pendulum : public Obj
     }
     
     void reset() {
-        float stdev = 0.1f;
+        float stdev = 0.5f;
         
         x = gaussian_random() * stdev;
         vx = gaussian_random() * stdev;
@@ -217,7 +217,7 @@ int main(int argc, const char * argv[]) {
         
         population.reproduce();
     }
-    
+    /*
     Pendulum p;
     p.reward = 0.0f;
     
@@ -230,7 +230,7 @@ int main(int argc, const char * argv[]) {
     }
     
     fprintf(log_file, "%f\n", p.reward);
-    
+    */
     fclose(log_file);
     fclose(pos_file);
     return 0;

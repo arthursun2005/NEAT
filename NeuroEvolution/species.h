@@ -25,6 +25,7 @@ struct ne_species
     size_t offsprings;
     
     size_t midpoint;
+    size_t alive_size;
 };
 
 inline bool ne_species_sort (const ne_species* A, const ne_species* B) {
