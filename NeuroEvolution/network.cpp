@@ -9,14 +9,15 @@
 #include "network.h"
 #include <stack>
 
-void set_innov(innov_map* map, size_t* innov, ne_link* link) {
-    auto it = map->find(link);
+void set_innov(ne_innov_map* map, size_t* innov, ne_link* link) {
+    ne_innov i(*link);
+    auto it = map->find(i);
     
     if(it != map->end()) {
         link->innov = it->second;
     }else{
         link->innov = (*innov)++;
-        map->insert({ne_innov(link), link->innov});
+        map->insert({i, link->innov});
     }
 }
 
@@ -41,10 +42,13 @@ void ne_network::reset(size_t inputs, size_t outputs) {
     
     for(size_t i = 0; i < input_size; ++i) {
         nodes[i].acts = 1;
+        nodes[i].value = gaussian_random();
     }
+    
+    killed = false;
 }
 
-void ne_network::initialize(innov_map* map, size_t* innov) {
+void ne_network::initialize(ne_innov_map* map, size_t* innov) {
     for(size_t i = 0; i < input_size; ++i) {
         for(size_t j = 0; j < output_size; ++j) {
             ne_link* link = new ne_link();
@@ -62,7 +66,7 @@ bool ne_network::outputs_off() const {
     size_t size = nodes.size();
     
     for(size_t i = input_size; i < size; ++i) {
-        if(nodes[i].acts == 0)
+        if(nodes[i].acts < 2)
             return true;
     }
     
@@ -81,9 +85,7 @@ void ne_network::compute() {
     size_t n = 0;
     size_t lm = links.size();
     
-    if(lm == 0) return;
-    
-    while((outputs_off() && n != lm) || n == 0) {
+    while(outputs_off() && n != lm) {
         for(size_t i = input_size; i < size; ++i) {
             nodes[i].computed = false;
             nodes[i].sum = 0.0f;
@@ -121,7 +123,7 @@ size_t ne_network::create_node() {
 }
 
 void ne_network::insert(ne_link *link) {
-    set.insert(link);
+    set.insert(ne_innov(*link));
     
     std::vector<ne_link*>::iterator end = links.end();
     
@@ -137,8 +139,7 @@ void ne_network::mutate_weights(const ne_params& params) {
     for(ne_link* link : links) {
         if(ne_random() < params.weights_reset_prob)
             link->weight = gaussian_random();
-        
-        else if(ne_random() < params.weights_mutate_prob)
+        else
             link->weight += ne_random(-params.weights_mutation_power, params.weights_mutation_power);
     }
     
@@ -146,81 +147,72 @@ void ne_network::mutate_weights(const ne_params& params) {
     
     if(ne_random() <params. weights_reset_prob)
         node.value = gaussian_random();
-    
-    else if(ne_random() < params.weights_mutate_prob)
-        node.value +=  ne_random(-params.weights_mutation_power, params.weights_mutation_power);
+    else
+        node.value += ne_random(-params.weights_mutation_power, params.weights_mutation_power);
 }
 
-void ne_network::mutate_topology_add_node(innov_map *map, size_t *innov, const ne_params& params) {
+void ne_network::mutate_topology_add_node(ne_innov_map *map, size_t *innov, const ne_params& params) {
     size_t ls = links.size();
     
     if(ls != 0) {
-        for(size_t n = 0; n < params.timeout; ++n) {
-            ne_link* link = links[rand64() % ls];
+        ne_link* link = links[rand64() % ls];
+        
+        if(!link->enabled) return;
+        
+        size_t node = create_node();
+        
+        link->enabled = false;
+        
+        {
+            ne_link* link1 = new ne_link();
+            link1->i = link->i;
+            link1->j = node;
             
-            if(!link->enabled) continue;
+            set_innov(map, innov, link1);
             
-            size_t node = create_node();
+            link1->weight = 1.0f;
+            link1->enabled = true;
             
-            link->enabled = false;
+            insert(link1);
+        }
+        
+        {
+            ne_link* link2 = new ne_link();
+            link2->i = node;
+            link2->j = link->j;
             
-            {
-                ne_link* link1 = new ne_link();
-                link1->i = link->i;
-                link1->j = node;
-                
-                set_innov(map, innov, link1);
-                
-                link1->weight = 1.0f;
-                link1->enabled = true;
-                
-                insert(link1);
-            }
+            set_innov(map, innov, link2);
             
-            {
-                ne_link* link2 = new ne_link();
-                link2->i = node;
-                link2->j = link->j;
-                
-                set_innov(map, innov, link2);
-                
-                link2->weight = link->weight;
-                link2->enabled = true;
-                
-                insert(link2);
-            }
+            link2->weight = link->weight;
+            link2->enabled = true;
             
-            break;
+            insert(link2);
         }
     }
 }
 
-void ne_network::mutate_topology_add_link(innov_map *map, size_t *innov, const ne_params& params) {
+void ne_network::mutate_topology_add_link(ne_innov_map *map, size_t *innov, const ne_params& params) {
     size_t size = nodes.size();
     
-    for(size_t n = 0; n < params.timeout; ++n) {
-        size_t i = rand64() % size;
-        size_t j = input_size + (rand64() % (size - input_size));
+    size_t i = rand64() % size;
+    size_t j = input_size + (rand64() % (size - input_size));
+    
+    ne_link l;
+    l.i = i;
+    l.j = j;
+    
+    auto it = set.find(ne_innov(l));
+    if(it != set.end()) {
+        return;
+    }else{
+        ne_link* link = new ne_link(l);
         
-        ne_link l;
-        l.i = i;
-        l.j = j;
+        set_innov(map, innov, link);
         
-        auto it = set.find(&l);
-        if(it != set.end()) {
-            continue;
-        }else{
-            ne_link* link = new ne_link(l);
-            
-            set_innov(map, innov, link);
-            
-            link->weight = gaussian_random();
-            link->enabled = true;
-            
-            insert(link);
-        }
+        link->weight = gaussian_random();
+        link->enabled = true;
         
-        break;
+        insert(link);
     }
 }
 
@@ -255,8 +247,6 @@ ne_network& ne_network::operator = (const ne_network &network) {
 
 void ne_network::crossover(const ne_network* A, const ne_network* B, ne_network* C, const ne_params& params) {
     C->reset(A->input_size - 1, B->output_size);
-    
-    size_t size = 0;
     
     bool avg = ne_random() < params.mate_avg_prob;
     
@@ -308,17 +298,13 @@ void ne_network::crossover(const ne_network* A, const ne_network* B, ne_network*
             ++itB;
         }
         
-        auto it = C->set.find(&link);
+        auto it = C->set.find(ne_innov(link));
         if(it == C->set.end()) {
-            size = std::max(size, link.i);
-            size = std::max(size, link.j);
             C->insert(new ne_link(link));
-        }else{
-            (*it)->weight = ((*it)->weight + link.weight) * 0.5f;
         }
     }
     
-    C->nodes.resize(std::max(size + 1, C->input_size + C->output_size));
+    C->nodes.resize(std::max(A->nodes.size(), B->nodes.size()));
 }
 
 float ne_network::distance(const ne_network *A, const ne_network *B, const ne_params& params) {
@@ -345,7 +331,8 @@ float ne_network::distance(const ne_network *A, const ne_network *B, const ne_pa
         }
         
         if((*itA)->innov == (*itB)->innov) {
-            W += fabsf((*itA)->weight - (*itB)->weight);
+            float d = (*itA)->weight - (*itB)->weight;
+            W += d * d;
             ++n;
             
             ++itA;
@@ -359,6 +346,6 @@ float ne_network::distance(const ne_network *A, const ne_network *B, const ne_pa
         }
     }
     
-    return miss / (float) std::max(A->links.size(), B->links.size()) + params.weights_power * W / (float) n;
+    return miss / (float) (n + miss) + params.weights_power * sqrtf(W / (float) n);
 }
     

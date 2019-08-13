@@ -16,16 +16,9 @@ struct ne_species
     std::vector<ne_network*> networks;
     
     float avg_fitness;
-    float best_fitness;
-    float max_fitness;
-    
     float rank;
     
-    size_t time_since_improvement;
     size_t offsprings;
-    
-    size_t midpoint;
-    size_t alive_size;
 };
 
 inline bool ne_species_sort (const ne_species* A, const ne_species* B) {

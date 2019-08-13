@@ -10,6 +10,7 @@
 #define ne_h
 
 #include "common.h"
+#include <unordered_set>
 #include <unordered_map>
 
 #define ne_func(x) (x / (1.0f + fabsf(x)))
@@ -17,6 +18,7 @@
 struct ne_params {
     float weights_power;
     float species_thresh;
+    float kill_ratio;
     float interspecies_mate_prob;
     float new_node_prob;
     float new_link_prob;
@@ -24,20 +26,19 @@ struct ne_params {
     float mutate_weights_prob;
     float mate_prob;
     float weights_reset_prob;
-    float weights_mutate_prob;
     float weights_mutation_power;
     float mate_avg_prob;
     float disable_inheritance;
     
     size_t dead_species_age;
-    size_t timeout;
     size_t population;
     size_t input_size;
     size_t output_size;
     
     ne_params() {
         weights_power = 0.5f;
-        species_thresh = 0.5f;
+        species_thresh = 1.0f;
+        kill_ratio = 0.5f;
         interspecies_mate_prob = 0.01f;
         new_node_prob = 0.03f;
         new_link_prob = 0.05f;
@@ -45,13 +46,11 @@ struct ne_params {
         mutate_weights_prob = 0.75f;
         mate_prob = 0.75f;
         weights_reset_prob = 0.1f;
-        weights_mutate_prob = 0.8f;
-        weights_mutation_power = 0.1f;
+        weights_mutation_power = 0.5f;
         mate_avg_prob = 0.5f;
         disable_inheritance = 0.75f;
         
         dead_species_age = 16;
-        timeout = 16;
         population = 256;
     }
 };
@@ -81,10 +80,11 @@ struct ne_innov
     size_t i;
     size_t j;
     
-    ne_innov(const ne_link* link) : i(link->i), j(link->j) {}
+    ne_innov(const ne_link& link) : i(link.i), j(link.j) {}
 };
 
-typedef std::unordered_map<ne_innov, size_t> innov_map;
+typedef std::unordered_map<ne_innov, size_t> ne_innov_map;
+typedef std::unordered_set<ne_innov> ne_innov_set;
 
 struct ne_node
 {
@@ -112,22 +112,6 @@ struct std::equal_to<ne_innov>
 {
     inline bool operator () (const ne_innov& a, const ne_innov& b) const {
         return a.i == b.i && a.j == b.j;
-    }
-};
-
-template <>
-struct std::hash<ne_link*>
-{
-    inline size_t operator () (const ne_link* x) const {
-        return ne_hashi2(x->i, x->j);
-    }
-};
-
-template <>
-struct std::equal_to<ne_link*>
-{
-    inline bool operator () (const ne_link* a, const ne_link* b) const {
-        return a->i == b->i && a->j == b->j;
     }
 };
 

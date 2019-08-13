@@ -11,7 +11,6 @@
 
 #include "ne.h"
 #include <vector>
-#include <unordered_set>
 
 struct ne_species;
 
@@ -46,9 +45,19 @@ public:
         return links.size();
     }
     
+    void print() {
+        for(ne_node& node : nodes) {
+            printf("Node %6.2f \n", node.value);
+        }
+        
+        for(ne_link* link : links) {
+            printf("Link %5zu %5zu %5zu %6.2f %d \n", link->i, link->j, link->innov, link->weight, link->enabled);
+        }
+    }
+    
     void reset(size_t inputs, size_t outputs);
     
-    void initialize(innov_map* map, size_t* innov);
+    void initialize(ne_innov_map* map, size_t* innov);
     
     void compute();
     
@@ -56,9 +65,9 @@ public:
     
     void mutate_weights(const ne_params& params);
     
-    void mutate_topology_add_node(innov_map* map, size_t* innov, const ne_params& params);
+    void mutate_topology_add_node(ne_innov_map* map, size_t* innov, const ne_params& params);
     
-    void mutate_topology_add_link(innov_map* map, size_t* innov, const ne_params& params);
+    void mutate_topology_add_link(ne_innov_map* map, size_t* innov, const ne_params& params);
     
     void mutate_toggle_link_enable(size_t times);
     
@@ -94,7 +103,7 @@ protected:
     std::vector<ne_node> nodes;
     std::vector<ne_link*> links;
     
-    std::unordered_set<ne_link*> set;
+    ne_innov_set set;
     
 };
 
@@ -110,9 +119,13 @@ inline bool ne_network_sort_rank (const ne_network* A, const ne_network* B) {
     return A->rank < B->rank;
 }
 
-inline void ne_mutate_network(ne_network* network, const ne_params& params, innov_map* map, size_t* innov) {
+inline void ne_mutate_network(ne_network* network, const ne_params& params, ne_innov_map* map, size_t* innov) {
     if(ne_random() < params.mutate_weights_prob) {
         network->mutate_weights(params);
+    }
+    
+    if(ne_random() < params.toggle_link_enable_prob) {
+        network->mutate_toggle_link_enable(1);
     }
     
     if(ne_random() < params.new_node_prob) {
@@ -121,10 +134,6 @@ inline void ne_mutate_network(ne_network* network, const ne_params& params, inno
     
     if(ne_random() < params.new_link_prob) {
         network->mutate_topology_add_link(map, innov, params);
-    }
-    
-    if(ne_random() < params.toggle_link_enable_prob) {
-        network->mutate_toggle_link_enable(1);
     }
 }
     

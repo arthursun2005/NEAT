@@ -7,6 +7,7 @@
 //
 
 #include <iostream>
+#include <fstream>
 #include "population.h"
 
 ne_population population;
@@ -15,8 +16,8 @@ ne_population population;
 
 #define time_step 0.01f
 
-FILE* log_file;
-FILE* pos_file;
+std::ofstream log_file;
+std::ofstream pos_file;
 
 int gens = 32;
 int pop = 256;
@@ -65,7 +66,7 @@ struct Pendulum : public Obj
     }
     
     void reset() {
-        float stdev = 0.5f;
+        float stdev = 0.1f;
         
         x = gaussian_random() * stdev;
         vx = gaussian_random() * stdev;
@@ -82,9 +83,9 @@ struct Pendulum : public Obj
         
         inputs[0].value = vx;
         inputs[1].value = x;
-        inputs[2].value = va;
-        inputs[3].value = c;
-        inputs[4].value = s;
+        inputs[2].value = c;
+        inputs[3].value = s;
+        inputs[4].value = va;
         
         net->compute();
         
@@ -151,7 +152,7 @@ struct XOR : public Obj
                 
                 net->compute();
                 
-                float d = (outputs[0].value >= 1.0f) - c;
+                float d = outputs[0].value - c;
                 reward += 1.0f - d * d;
             }
         }
@@ -164,23 +165,23 @@ std::vector<obj_type> objs(pop);
 
 void initialize() {
     ne_params params;
-    params.input_size = Pendulum::input_size;
-    params.output_size = Pendulum::output_size;
+    params.input_size = obj_type::input_size;
+    params.output_size = obj_type::output_size;
     params.population = pop;
-    population.initialize(params);
+    population.reset(params);
 }
 
 int main(int argc, const char * argv[]) {
-    log_file = fopen("log.txt", "w");
-    pos_file = fopen("pos.txt", "w");
-    
+    log_file.open("log.txt");
+    pos_file.open("pos.txt");
+
     initialize();
     
     ne_network* best = nullptr;
     
-    fprintf(log_file, "Population: %d \n \n ", pop);
+    log_file << "Population: " << pop << std::endl;
     
-    fflush(log_file);
+    log_file.flush();
 
     for(int n = 0; n < gens; ++n) {
         for(int i = 0; i < pop; ++i) {
@@ -191,33 +192,34 @@ int main(int argc, const char * argv[]) {
             population[i]->fitness = objs[i].reward;
         }
         
-        fprintf(log_file, "\n\n\n");
+        log_file << std::endl << std::endl << std::endl;
         
-        fprintf(log_file, "Generation %d: \n", n);
+        log_file << "Generation: " << n << std::endl;
         
         best = population.select();
         
         for(int i = 0; i < pop; ++i) {
-            fprintf(log_file, "%5d # %5d: age %5zu %6.2f complexity %5zu size %5zu \n", n, i, population[i]->age, population[i]->fitness, population[i]->complexity(), population[i]->size());
+            log_file << "age: " << population[i]->age << "  fitness: " << population[i]->fitness << "  complexity: " << population[i]->complexity() << "  size: " << population[i]->size() << std::endl;
         }
         
-        fprintf(log_file, "\n\n");
+        log_file << std::endl << std::endl << std::endl;
         
         for(ne_species* sp : population.species) {
-            fprintf(log_file, "Species %6.2f offsprings %5zu size %5zu %5zu \n", sp->avg_fitness, sp->offsprings, sp->networks.size(), sp->time_since_improvement);
+            log_file << "Species: " << sp->avg_fitness << "  offsprings: " << sp->offsprings << "  size: " << sp->networks.size() << std::endl;
         }
         
-        fprintf(log_file, "\n\n");
+        log_file << std::endl << std::endl << std::endl;
         
-        fprintf(log_file, "best fitness %6.2f complexity %5zu size %5zu \n", best->fitness, best->complexity(), best->size());
+        log_file << "age: " << best->age << "  fitness: " << best->fitness << "  complexity: " << best->complexity() << "  size: " << best->size() << std::endl;
         
-        fprintf(log_file, "%5zu\n", population.innovation);
-                
-        fflush(log_file);
+        log_file.flush();
+        
+        best->print();
         
         population.reproduce();
     }
-    /*
+    
+    
     Pendulum p;
     p.reward = 0.0f;
     
@@ -226,12 +228,12 @@ int main(int argc, const char * argv[]) {
     for(int i = 0; i < time_limit; ++i) {
         p.step(time_step, best);
         
-        fprintf(pos_file, "%f, %f, \n", p.x, p.a);
+        pos_file << p.x << ", " << p.a << "," << std::endl;
     }
     
-    fprintf(log_file, "%f\n", p.reward);
-    */
-    fclose(log_file);
-    fclose(pos_file);
+    log_file << p.reward << std::endl;
+        
+    log_file.close();
+    pos_file.close();
     return 0;
 }

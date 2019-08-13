@@ -19,7 +19,7 @@ inline uint32_t rand32() {
 }
 
 inline uint64_t rand64() {
-    return rand32() | (uint64_t(rand32()) << 32);
+    return rand32() | ((uint64_t)(rand32()) << 32);
 }
     
 inline float gaussian_random() {

@@ -18,16 +18,16 @@ class ne_population
 public:
     
     ~ne_population() {
-        for(ne_network* network : networks) {
-            delete network;
-        }
-        
         for(ne_species* sp : species) {
             delete sp;
         }
+        
+        for(ne_network* network : networks) {
+            delete network;
+        }
     }
     
-    inline void initialize(const ne_params& _params) {
+    inline void reset(const ne_params& _params) {
         params = _params;
         
         for(ne_network* network : networks) {
@@ -63,19 +63,16 @@ public:
     
     std::vector<ne_network*> networks;
     std::vector<ne_species*> species;
-    
-    float best_fitness;
-    
+        
     ne_params params;
     
 private:
     
-    innov_map map;
-    
-    size_t midpoint;
-    size_t alive_size;
+    ne_innov_map map;
     
     ne_network* _breed(ne_species* sp);
+    
+    void _kill();
     
     void _add(ne_network* n);
     
