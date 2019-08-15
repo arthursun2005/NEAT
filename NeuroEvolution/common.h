@@ -22,9 +22,9 @@ inline uint64_t rand64() {
     return rand32() | ((uint64_t)(rand32()) << 32);
 }
     
-inline float gaussian_random() {
+inline double gaussian_random() {
     thread_local std::default_random_engine g;
-    thread_local std::normal_distribution<float> d(0.0f, 1.0f);
+    thread_local std::normal_distribution<double> d(0.0, 1.0);
     return d(g);
 }
 

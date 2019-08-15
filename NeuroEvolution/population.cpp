@@ -39,66 +39,53 @@ void ne_population::_kill() {
     
     while(it-- != begin) {
         if((*it)->killed) {
-            _remove(*it);
+            ne_genome* g = *it;
+            _remove(g);
             genomes.erase(it);
+            delete g;
         }
     }
 }
 
 ne_genome* ne_population::select() {
-    size_t size = genomes.size();
-    
     size_t offsprings = 0;
     
-    unsigned int total_rank = 0;
+    double total_rank = 0.0;
     
     for(ne_species* sp : species) {
         size_t spsize = sp->genomes.size();
         
         std::sort(sp->genomes.data(), sp->genomes.data() + spsize, ne_genome_sort);
         
-        size_t midpoint = spsize * params.kill_ratio;
+        size_t midpoint = floorf(spsize * params.kill_ratio);
         
         for(size_t i = 0; i != midpoint; ++i) {
             sp->genomes[i]->killed = true;
         }
-    }
-    
-    for(ne_species* sp : species) {
-        sp->avg_fitness = 0.0f;
         
-        unsigned int size = (unsigned int) sp->genomes.size();
+        sp->avg_fitness = 0.0;
         
         for(ne_genome* g : sp->genomes) {
+            if(isnan(g->fitness) || g->fitness < 0.0)
+                g->fitness = 0.0;
+            
             sp->avg_fitness += g->fitness;
         }
         
-        sp->avg_fitness /= size;
+        sp->avg_fitness /= (double) spsize;
         
         total_rank += sp->avg_fitness;
     }
     
-    std::sort(species.data(), species.data() + species.size(), ne_species_sort);
-    
-    size_t expected_offsprings = size * params.kill_ratio;
-    
     for(ne_species* sp : species) {
-        sp->offsprings = (expected_offsprings * sp->avg_fitness) / total_rank;
+        sp->offsprings = (size_t)(params.population * sp->avg_fitness / total_rank);
         offsprings += sp->offsprings;
     }
     
-    size_t over = expected_offsprings - offsprings;
-    
-    while(over != 0) {
-        for(ne_species* sp : species) {
-            if(over == 0) break;
-            ++sp->offsprings;
-            --over;
-        }
-    }
+    std::sort(species.data(), species.data() + species.size(), ne_species_sort);
     
     size_t idx = 0;
-    for(size_t i = 0; i < size; ++i)
+    for(size_t i = 0; i < params.population; ++i)
         if(genomes[i]->fitness > genomes[idx]->fitness)
             idx = i;
     
@@ -118,7 +105,9 @@ void ne_population::reproduce() {
         }
         
         size_t n = sp->genomes.size() - 1;
-        if(sp->offsprings == 0) ++n;
+        
+        if(sp->offsprings == 0)
+            ++n;
         
         for(size_t i = 0; i != n; ++i) {
             sp->genomes[i]->killed = true;
@@ -128,27 +117,30 @@ void ne_population::reproduce() {
     _kill();
     
     size_t size = genomes.size();
-    
     size_t ss = species.size();
     
     while(size + ns.size() < params.population) {
         ne_species* sp = species[rand64() % ss];
         ns.push_back(_breed(sp));
     }
-    
+        
     for(ne_genome* g : ns) {
-        genomes.push_back(g);
-        _add(g);
+        if(genomes.size() != params.population) {
+            genomes.push_back(g);
+            _add(g);
+        }else{
+            delete g;
+        }
     }
 }
 
 void ne_population::_add(ne_genome* g) {
     ne_species* sp = nullptr;
-    float mc = params.species_thresh;
+    double mc = params.species_thresh;
     
     for(ne_species* s : species) {
         ne_genome* j = s->genomes.front();
-        float ts = ne_distance(g, j, params);
+        double ts = ne_distance(g, j, params);
         if(ts < mc) {
             mc = ts;
             sp = s;

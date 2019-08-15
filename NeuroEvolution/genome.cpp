@@ -20,7 +20,7 @@ void ne_genome::reset(size_t inputs, size_t outputs) {
         nodes[i].activations = 1;
     }
     
-    nodes[input_size - 1].value = 1.0f;
+    nodes[input_size - 1].value = 1.0;
     
     killed = false;
 }
@@ -54,7 +54,7 @@ void ne_genome::flush() {
     }
 }
 
-void ne_genome::compute(const ne_params& params) {
+void ne_genome::_compute(const ne_params& params) {
     size_t size = nodes.size();
     size_t qf = input_size + output_size;
     
@@ -63,7 +63,7 @@ void ne_genome::compute(const ne_params& params) {
     while(n != params.activations_per_second) {
         for(size_t i = input_size; i < size; ++i) {
             nodes[i].computed = false;
-            nodes[i].sum = 0.0f;
+            nodes[i].sum = 0.0;
         }
         
         for(ne_gene* gene : genes) {
@@ -134,7 +134,7 @@ void ne_genome::mutate_topology_add_node(ne_innov_map *map, size_t *innov, const
         {
             ne_gene* gene1 = new ne_gene(gene->link->i, node, get_innov(map, innov, ne_innov(gene->link->i, node)));
 
-            gene1->link->weight = 1.0f;
+            gene1->link->weight = 1.0;
             gene1->enabled = true;
             
             insert(gene1);
@@ -213,7 +213,7 @@ void ne_crossover(const ne_genome* A, const ne_genome* B, ne_genome* C, const ne
     
     bool avg = ne_random() < params.mate_avg_prob;
     
-    C->fitness = (A->fitness + B->fitness) * 0.5f;
+    C->fitness = (A->fitness + B->fitness) * 0.5;
     
     std::vector<ne_gene*>::const_iterator itA, itB;
     
@@ -222,7 +222,7 @@ void ne_crossover(const ne_genome* A, const ne_genome* B, ne_genome* C, const ne
     
     while(itA != A->genes.end() || itB != B->genes.end()) {
         size_t i, j, innov;
-        float weight;
+        double weight;
         bool enabled;
         
         if(itA == A->genes.end()) {
@@ -244,7 +244,7 @@ void ne_crossover(const ne_genome* A, const ne_genome* B, ne_genome* C, const ne
             j = (*itA)->link->j;
             innov = (*itA)->innov;
             
-            if(avg) weight = ((*itA)->link->weight + (*itB)->link->weight) * 0.5f;
+            if(avg) weight = ((*itA)->link->weight + (*itB)->link->weight) * 0.5;
             else weight = (rand32() & 1) ? (*itA)->link->weight : (*itB)->link->weight;
             
             if((*itA)->enabled && (*itB)->enabled) {
@@ -287,7 +287,7 @@ void ne_crossover(const ne_genome* A, const ne_genome* B, ne_genome* C, const ne
     }
 }
 
-float ne_distance(const ne_genome *A, const ne_genome *B, const ne_params& params) {
+double ne_distance(const ne_genome *A, const ne_genome *B, const ne_params& params) {
     std::vector<ne_gene*>::const_iterator itA, itB;
     
     itA = A->genes.begin();
@@ -295,7 +295,7 @@ float ne_distance(const ne_genome *A, const ne_genome *B, const ne_params& param
     
     size_t miss = 0;
     size_t n = 0;
-    float W = 0.0f;
+    double W = 0.0;
     
     while(itA != A->genes.end() || itB != B->genes.end()) {
         if(itA == A->genes.end()) {
@@ -311,7 +311,7 @@ float ne_distance(const ne_genome *A, const ne_genome *B, const ne_params& param
         }
         
         if((*itA)->innov == (*itB)->innov) {
-            float d = (*itA)->link->weight - (*itB)->link->weight;
+            double d = (*itA)->link->weight - (*itB)->link->weight;
             W += d * d;
             ++n;
             
@@ -326,5 +326,5 @@ float ne_distance(const ne_genome *A, const ne_genome *B, const ne_params& param
         }
     }
     
-    return miss / (float) (n + miss) + params.weights_power * sqrtf(W / (float) n);
+    return miss / (double) (n + miss) + params.weights_power * sqrtf(W / (double) n);
 }

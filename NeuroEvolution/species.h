@@ -15,7 +15,7 @@ struct ne_species
 {
     std::vector<ne_genome*> genomes;
     
-    unsigned int avg_fitness;
+    double avg_fitness;
     
     size_t offsprings;
 };

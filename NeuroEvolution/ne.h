@@ -13,25 +13,25 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <fstream>
+#include <iostream>
 #include <vector>
-#include <list>
 
-#define ne_func(x) (x / (1.0f + fabsf(x)))
+#define ne_func(x) (x / (1.0 + (x < 0.0 ? -x : x)))
 
 struct ne_params {
-    float weights_power;
-    float species_thresh;
-    float kill_ratio;
-    float interspecies_mate_prob;
-    float new_node_prob;
-    float new_link_prob;
-    float toggle_link_enable_prob;
-    float mutate_weights_prob;
-    float mate_prob;
-    float weights_reset_prob;
-    float weights_mutation_power;
-    float mate_avg_prob;
-    float disable_inheritance;
+    double weights_power;
+    double species_thresh;
+    double kill_ratio;
+    double interspecies_mate_prob;
+    double new_node_prob;
+    double new_link_prob;
+    double toggle_link_enable_prob;
+    double mutate_weights_prob;
+    double mate_prob;
+    double weights_reset_prob;
+    double weights_mutation_power;
+    double mate_avg_prob;
+    double disable_inheritance;
     
     size_t activations_per_second;
     size_t timeout;
@@ -40,19 +40,19 @@ struct ne_params {
     size_t output_size;
     
     ne_params() {
-        weights_power = 0.25f;
-        species_thresh = 0.5f;
-        kill_ratio = 0.5f;
-        interspecies_mate_prob = 0.01f;
-        new_node_prob = 0.03f;
-        new_link_prob = 0.05f;
-        toggle_link_enable_prob = 0.1f;
-        mutate_weights_prob = 0.75f;
-        mate_prob = 0.75f;
-        weights_reset_prob = 0.1f;
-        weights_mutation_power = 0.5f;
-        mate_avg_prob = 0.5f;
-        disable_inheritance = 0.75f;
+        weights_power = 0.25;
+        species_thresh = 0.5;
+        kill_ratio = 0.5;
+        interspecies_mate_prob = 0.01;
+        new_node_prob = 0.03;
+        new_link_prob = 0.05;
+        toggle_link_enable_prob = 0.1;
+        mutate_weights_prob = 0.75;
+        mate_prob = 0.75;
+        weights_reset_prob = 0.1;
+        weights_mutation_power = 0.5;
+        mate_avg_prob = 0.5;
+        disable_inheritance = 0.75;
         
         activations_per_second = 16;
         timeout = 8;
@@ -61,11 +61,11 @@ struct ne_params {
 };
 
 
-inline float ne_random() {
-    return rand32() / (float) (0xffffffff);
+inline double ne_random() {
+    return rand64() / (double) (0xffffffffffffffff);
 }
 
-inline float ne_random(float a, float b) {
+inline double ne_random(double a, double b) {
     return ne_random() * (b - a) + a;
 }
 
@@ -73,7 +73,7 @@ struct ne_link {
     const size_t i;
     const size_t j;
     
-    float weight;
+    double weight;
     
     ne_link(size_t i, size_t j) : i(i), j(j) {}
 };
@@ -113,8 +113,8 @@ typedef std::unordered_set<ne_innov> ne_innov_set;
 
 struct ne_node
 {
-    float value;
-    float sum;
+    double value;
+    double sum;
     bool computed;
     size_t activations;
 };

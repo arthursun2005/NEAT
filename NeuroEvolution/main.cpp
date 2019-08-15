@@ -28,7 +28,7 @@ struct Obj
     static const int input_size;
     static const int output_size;
     
-    float reward;
+    double reward;
     
     virtual void run(ne_genome* gen) = 0;
 };
@@ -39,33 +39,33 @@ struct Pendulum : public Obj
     static const int input_size = 5;
     static const int output_size = 1;
     
-    float x;
-    float vx;
-    float a;
-    float va;
+    double x;
+    double vx;
+    double a;
+    double va;
     
-    float g;
-    float m_c;
-    float m_p;
-    float m;
-    float l;
-    float f;
-    float b;
+    double g;
+    double m_c;
+    double m_p;
+    double m;
+    double l;
+    double f;
+    double b;
     
-    float xt = 2.4f;
+    double xt = 2.4;
     
     Pendulum() {
-        g = 9.8f;
-        m_c = 0.5f;
-        m_p = 0.5f;
+        g = 9.8;
+        m_c = 0.5;
+        m_p = 0.5;
         m = m_c + m_p;
-        l = 0.6f;
-        f = 20.0f;
-        b = 0.1f;
+        l = 0.6;
+        f = 20.0;
+        b = 0.1;
     }
     
     void reset() {
-        float stdev = 0.1f;
+        double stdev = 0.1;
         
         x = gaussian_random() * stdev;
         vx = gaussian_random() * stdev;
@@ -73,12 +73,12 @@ struct Pendulum : public Obj
         va = gaussian_random() * stdev;
     }
     
-    void step(float dt, ne_genome* gen) {
+    void step(double dt, ne_genome* gen) {
         ne_node* inputs = gen->inputs();
         ne_node* outputs = gen->outputs();
         
-        float c = cosf(a);
-        float s = sinf(a);
+        double c = cos(a);
+        double s = sin(a);
         
         inputs[0].value = vx;
         inputs[1].value = x;
@@ -88,18 +88,18 @@ struct Pendulum : public Obj
         
         population.compute(gen);
         
-        float action = outputs[0].value;
-                
-        action = action < -1.0f ? -1.0f : (action > 1.0f ? 1.0f : action);
+        double action = outputs[0].value;
+        
+        action = action < -1.0 ? -1.0 : (action > 1.0 ? 1.0 : action);
         
         action *= f;
         
-        float va2 = va * va;
-        float sc = s * c;
-        float c2 = c * c;
+        double va2 = va * va;
+        double sc = s * c;
+        double c2 = c * c;
 
-        float vvx = (-2.0f * m_p * l * va2 * s + 3.0f * m_p * g * sc + 4.0f * action - 4.0f * b * vx) / (4.0f * m - 3.0f * m_p * c2);
-        float vva = (-3.0f * m_p * l * va2 * sc + 6.0f * m * g * s + 6.0f * (action - b * vx) * c) / (4.0f * l * m - 3.0f * m_p * l * c2);
+        double vvx = (-2.0 * m_p * l * va2 * s + 3.0 * m_p * g * sc + 4.0 * action - 4.0 * b * vx) / (4.0 * m - 3.0 * m_p * c2);
+        double vva = (-3.0 * m_p * l * va2 * sc + 6.0 * m * g * s + 6.0 * (action - b * vx) * c) / (4.0 * l * m - 3.0 * m_p * l * c2);
         
         vx = vx + vvx * dt;
         va = va + vva * dt;
@@ -107,16 +107,12 @@ struct Pendulum : public Obj
         x = x + vx * dt;
         a = a + va * dt;
         
-        float q = x / xt;
+        double q = x / xt;
         
-        q = q > 1.0f ? 1.0f : q;
-        q = q < -1.0f ? -1.0f : q;
+        q = q > 1.0 ? 1.0 : q;
+        q = q < -1.0 ? -1.0 : q;
         
-        reward += 0.5f * (cosf(a) + 1.0f) * (cosf(q * M_PI * 0.5f));
-        
-        if(q > -1.0f && q < 1.0f) {
-            //reward += 0.5f * (cosf(a) + 1.0f);
-        }
+        reward += 0.5 * (cos(a) + 1.0) * (cos(q * M_PI * 0.5));
     }
     
     void run(ne_genome* g) {
@@ -129,7 +125,7 @@ struct Pendulum : public Obj
             }
         }
         
-        reward /= (float) trials;
+        reward /= (double) trials;
     }
     
 };
@@ -152,8 +148,8 @@ struct XOR : public Obj
                 
                 population.compute(gen);
                 
-                float d = outputs[0].value - c;
-                reward += 1.0f - d * d;
+                double d = outputs[0].value - c;
+                reward += 1.0 - d * d;
             }
         }
     }
@@ -182,14 +178,14 @@ int main(int argc, const char * argv[]) {
     log_file << "Population: " << pop << std::endl;
     
     log_file.flush();
-
+    
     for(int n = 0; n < gens; ++n) {
         for(int i = 0; i < pop; ++i) {
-            objs[i].reward = 0.0f;
+            objs[i].reward = 0.0;
             
             objs[i].run(population[i]);
             
-            population[i]->fitness = objs[i].reward * 1000;
+            population[i]->fitness = objs[i].reward;
         }
         
         log_file << std::endl << std::endl << std::endl;
@@ -220,7 +216,7 @@ int main(int argc, const char * argv[]) {
     }
     
     Pendulum p;
-    p.reward = 0.0f;
+    p.reward = 0.0;
     
     p.reset();
     best->flush();

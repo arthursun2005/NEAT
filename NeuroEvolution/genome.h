@@ -56,7 +56,7 @@ struct ne_genome
     
     void flush();
     
-    void compute(const ne_params& params);
+    void _compute(const ne_params& params);
         
     void mutate_weights(const ne_params& params);
     
@@ -66,7 +66,7 @@ struct ne_genome
     
     void mutate_toggle_link_enable(size_t times);
     
-    unsigned int fitness;
+    double fitness;
     
     ne_species* sp;
     
@@ -86,7 +86,7 @@ inline bool ne_genome_sort(const ne_genome* a, const ne_genome* b) {
 }
 
 void ne_crossover(const ne_genome* A, const ne_genome* B, ne_genome* C, const ne_params& params);
-float ne_distance(const ne_genome* A, const ne_genome* B, const ne_params& params);
+double ne_distance(const ne_genome* A, const ne_genome* B, const ne_params& params);
 
 inline void ne_mutate(ne_genome* genome, const ne_params& params, ne_innov_map* map, size_t* innov) {
     if(ne_random() < params.mutate_weights_prob) {

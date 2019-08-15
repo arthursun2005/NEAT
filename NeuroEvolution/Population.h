@@ -55,7 +55,7 @@ public:
     }
     
     inline void compute(ne_genome* g) const {
-        g->compute(params);
+        g->_compute(params);
     }
     
     ne_genome* select();
