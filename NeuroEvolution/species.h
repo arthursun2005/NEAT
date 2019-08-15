@@ -9,20 +9,19 @@
 #ifndef species_h
 #define species_h
 
-#include "network.h"
+#include "genome.h"
 
 struct ne_species
 {
-    std::vector<ne_network*> networks;
+    std::vector<ne_genome*> genomes;
     
-    float avg_fitness;
-    float rank;
+    unsigned int avg_fitness;
     
     size_t offsprings;
 };
 
 inline bool ne_species_sort (const ne_species* A, const ne_species* B) {
-    return A->rank > B->rank;
+    return A->avg_fitness > B->avg_fitness;
 }
 
 #endif /* species_h */

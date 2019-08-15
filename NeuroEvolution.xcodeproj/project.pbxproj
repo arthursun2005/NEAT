@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		8E1F7A0722EF9CF80046AD75 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E1F7A0622EF9CF80046AD75 /* main.cpp */; };
-		8E1F7A1222EFCF1C0046AD75 /* network.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E1F7A1122EFCF1C0046AD75 /* network.cpp */; };
+		8E813D872304E488006052CF /* genome.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E813D862304E488006052CF /* genome.cpp */; };
 		8EF9F43722FFD44100CD6017 /* population.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8EF9F43622FFD44100CD6017 /* population.cpp */; };
 /* End PBXBuildFile section */
 
@@ -28,12 +28,12 @@
 		8E1F7A0322EF9CF80046AD75 /* NeuroEvolution */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = NeuroEvolution; sourceTree = BUILT_PRODUCTS_DIR; };
 		8E1F7A0622EF9CF80046AD75 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		8E1F7A0D22EF9D5A0046AD75 /* ne.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ne.h; sourceTree = "<group>"; };
-		8E1F7A0E22EF9D710046AD75 /* network.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = network.h; sourceTree = "<group>"; };
 		8E1F7A0F22EF9D980046AD75 /* common.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = common.h; sourceTree = "<group>"; };
-		8E1F7A1122EFCF1C0046AD75 /* network.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = network.cpp; sourceTree = "<group>"; };
 		8E1F7A1622F172360046AD75 /* population.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = population.h; path = ../../../../../../System/Volumes/Data/Users/arthur/work/code/NeuroEvolution/NeuroEvolution/population.h; sourceTree = "<group>"; };
 		8E21D4F122FD6A4500286DC4 /* pos.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = pos.txt; sourceTree = "<group>"; };
 		8E21D4F222FD882600286DC4 /* log.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = log.txt; sourceTree = "<group>"; };
+		8E813D852304E479006052CF /* genome.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = genome.h; sourceTree = "<group>"; };
+		8E813D862304E488006052CF /* genome.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = genome.cpp; sourceTree = "<group>"; };
 		8EBEB9E122F78BD200656B66 /* species.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = species.h; sourceTree = "<group>"; };
 		8EF9F43622FFD44100CD6017 /* population.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = population.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -74,8 +74,8 @@
 				8EF9F43622FFD44100CD6017 /* population.cpp */,
 				8E1F7A1622F172360046AD75 /* population.h */,
 				8EBEB9E122F78BD200656B66 /* species.h */,
-				8E1F7A1122EFCF1C0046AD75 /* network.cpp */,
-				8E1F7A0E22EF9D710046AD75 /* network.h */,
+				8E813D862304E488006052CF /* genome.cpp */,
+				8E813D852304E479006052CF /* genome.h */,
 				8E1F7A0D22EF9D5A0046AD75 /* ne.h */,
 				8E1F7A0F22EF9D980046AD75 /* common.h */,
 			);
@@ -139,7 +139,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8EF9F43722FFD44100CD6017 /* population.cpp in Sources */,
-				8E1F7A1222EFCF1C0046AD75 /* network.cpp in Sources */,
+				8E813D872304E488006052CF /* genome.cpp in Sources */,
 				8E1F7A0722EF9CF80046AD75 /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

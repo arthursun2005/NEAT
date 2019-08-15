@@ -7,7 +7,6 @@
 //
 
 #include <iostream>
-#include <fstream>
 #include "population.h"
 
 ne_population population;
@@ -31,7 +30,7 @@ struct Obj
     
     float reward;
     
-    virtual void run(ne_network* net) = 0;
+    virtual void run(ne_genome* gen) = 0;
 };
 
 struct Pendulum : public Obj
@@ -74,9 +73,9 @@ struct Pendulum : public Obj
         va = gaussian_random() * stdev;
     }
     
-    void step(float dt, ne_network* net) {
-        ne_node* inputs = net->inputs();
-        ne_node* outputs = net->outputs();
+    void step(float dt, ne_genome* gen) {
+        ne_node* inputs = gen->inputs();
+        ne_node* outputs = gen->outputs();
         
         float c = cosf(a);
         float s = sinf(a);
@@ -87,7 +86,7 @@ struct Pendulum : public Obj
         inputs[3].value = s;
         inputs[4].value = va;
         
-        net->compute();
+        population.compute(gen);
         
         float action = outputs[0].value;
                 
@@ -120,12 +119,13 @@ struct Pendulum : public Obj
         }
     }
     
-    void run(ne_network* net) {
+    void run(ne_genome* g) {
         for(int q = 0; q < trials; ++q) {
             reset();
-
+            g->flush();
+            
             for(int i = 0; i < time_limit; ++i) {
-                step(time_step, net);
+                step(time_step, g);
             }
         }
         
@@ -139,18 +139,18 @@ struct XOR : public Obj
     static const int input_size = 2;
     static const int output_size = 1;
     
-    void run(ne_network* net) {
+    void run(ne_genome* gen) {
         for(int a = 0; a < 2; ++a) {
             for(int b = 0; b < 2; ++b) {
                 int c = a ^ b;
                 
-                ne_node* inputs = net->inputs();
-                ne_node* outputs = net->outputs();
+                ne_node* inputs = gen->inputs();
+                ne_node* outputs = gen->outputs();
                 
                 inputs[0].value = a;
                 inputs[1].value = b;
                 
-                net->compute();
+                population.compute(gen);
                 
                 float d = outputs[0].value - c;
                 reward += 1.0f - d * d;
@@ -177,7 +177,7 @@ int main(int argc, const char * argv[]) {
 
     initialize();
     
-    ne_network* best = nullptr;
+    ne_genome* best = nullptr;
     
     log_file << "Population: " << pop << std::endl;
     
@@ -189,7 +189,7 @@ int main(int argc, const char * argv[]) {
             
             objs[i].run(population[i]);
             
-            population[i]->fitness = objs[i].reward;
+            population[i]->fitness = objs[i].reward * 1000;
         }
         
         log_file << std::endl << std::endl << std::endl;
@@ -199,31 +199,31 @@ int main(int argc, const char * argv[]) {
         best = population.select();
         
         for(int i = 0; i < pop; ++i) {
-            log_file << "age: " << population[i]->age << "  fitness: " << population[i]->fitness << "  complexity: " << population[i]->complexity() << "  size: " << population[i]->size() << std::endl;
+            log_file << "fitness: " << population[i]->fitness << "  complexity: " << population[i]->complexity() << "  size: " << population[i]->size() << std::endl;
         }
         
         log_file << std::endl << std::endl << std::endl;
         
         for(ne_species* sp : population.species) {
-            log_file << "Species: " << sp->avg_fitness << "  offsprings: " << sp->offsprings << "  size: " << sp->networks.size() << std::endl;
+            log_file << "Species: " << sp->avg_fitness << "  offsprings: " << sp->offsprings << "  size: " << sp->genomes.size() << std::endl;
         }
         
         log_file << std::endl << std::endl << std::endl;
         
-        log_file << "age: " << best->age << "  fitness: " << best->fitness << "  complexity: " << best->complexity() << "  size: " << best->size() << std::endl;
+        log_file << "fitness: " << best->fitness << "  complexity: " << best->complexity() << "  size: " << best->size() << std::endl;
+        
+        log_file << std::endl << std::endl << std::endl;
         
         log_file.flush();
         
-        best->print();
-        
         population.reproduce();
     }
-    
     
     Pendulum p;
     p.reward = 0.0f;
     
     p.reset();
+    best->flush();
     
     for(int i = 0; i < time_limit; ++i) {
         p.step(time_step, best);

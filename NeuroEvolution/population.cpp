@@ -8,94 +8,74 @@
 
 #include "population.h"
 
-ne_network* ne_population::_breed(ne_species *sp) {
-    ne_network* baby = new ne_network();
+ne_genome* ne_population::_breed(ne_species *sp) {
+    ne_genome* baby = new ne_genome();
     
-    size_t size = networks.size();
-    size_t spsize = sp->networks.size();
+    size_t size = genomes.size();
+    size_t spsize = sp->genomes.size();
     
     size_t i1 = ne_random() * spsize;
     
     if(ne_random() < params.mate_prob && spsize != 1) {
         if(ne_random() < params.interspecies_mate_prob) {
             size_t i2 = ne_random() * size;
-            ne_network::crossover(sp->networks[i1], networks[i2], baby, params);
+            ne_crossover(sp->genomes[i1], genomes[i2], baby, params);
         }else{
             size_t i2 = ne_random() * spsize;
-            ne_network::crossover(sp->networks[i1], sp->networks[i2], baby, params);
+            ne_crossover(sp->genomes[i1], sp->genomes[i2], baby, params);
         }
     }else{
-        *baby = *sp->networks[i1];
+        *baby = *sp->genomes[i1];
     }
     
-    ne_mutate_network(baby, params, &map, &innovation);
+    ne_mutate(baby, params, &map, &innovation);
     
     return baby;
 }
 
 void ne_population::_kill() {
-    std::vector<ne_network*>::iterator it = networks.end();
-    std::vector<ne_network*>::iterator begin = networks.begin();
+    std::vector<ne_genome*>::iterator it = genomes.end();
+    std::vector<ne_genome*>::iterator begin = genomes.begin();
     
     while(it-- != begin) {
         if((*it)->killed) {
             _remove(*it);
-            networks.erase(it);
+            genomes.erase(it);
         }
     }
 }
 
-ne_network* ne_population::select() {
-    size_t size = networks.size();
+ne_genome* ne_population::select() {
+    size_t size = genomes.size();
     
     size_t offsprings = 0;
     
-    float total_rank = 0.0f;
+    unsigned int total_rank = 0;
     
     for(ne_species* sp : species) {
-        size_t spsize = sp->networks.size();
-        float inv_size = 1.0f / (float) spsize;
+        size_t spsize = sp->genomes.size();
         
-        std::sort(sp->networks.data(), sp->networks.data() + spsize, ne_network_sort_fitness);
+        std::sort(sp->genomes.data(), sp->genomes.data() + spsize, ne_genome_sort);
         
         size_t midpoint = spsize * params.kill_ratio;
         
         for(size_t i = 0; i != midpoint; ++i) {
-            sp->networks[i]->adjusted_fitness = sp->networks[i]->fitness * inv_size;
-            sp->networks[i]->killed = true;
+            sp->genomes[i]->killed = true;
         }
-        
-        for(size_t i = midpoint; i != spsize; ++i) {
-            sp->networks[i]->adjusted_fitness = sp->networks[i]->fitness * inv_size;
-        }
-    }
-    
-    std::sort(networks.data(), networks.data() + size, ne_network_sort_adjusted_fitness);
-    
-    size_t idx = 0;
-    for(size_t i = 0; i < size; ++i) {
-        if(networks[i]->fitness > networks[idx]->fitness) {
-            idx = i;
-        }
-        
-        networks[i]->rank = (float) i;
     }
     
     for(ne_species* sp : species) {
         sp->avg_fitness = 0.0f;
-        sp->rank = 0.0f;
         
-        float inv_size = 1.0f / (float) sp->networks.size();
+        unsigned int size = (unsigned int) sp->genomes.size();
         
-        for(ne_network* n : sp->networks) {
-            sp->avg_fitness += n->fitness;
-            sp->rank += n->rank;
+        for(ne_genome* g : sp->genomes) {
+            sp->avg_fitness += g->fitness;
         }
         
-        sp->avg_fitness *= inv_size;
-        sp->rank *= inv_size;
+        sp->avg_fitness /= size;
         
-        total_rank += sp->rank;
+        total_rank += sp->avg_fitness;
     }
     
     std::sort(species.data(), species.data() + species.size(), ne_species_sort);
@@ -103,7 +83,7 @@ ne_network* ne_population::select() {
     size_t expected_offsprings = size * params.kill_ratio;
     
     for(ne_species* sp : species) {
-        sp->offsprings = floorf(expected_offsprings * (sp->rank / total_rank));
+        sp->offsprings = (expected_offsprings * sp->avg_fitness) / total_rank;
         offsprings += sp->offsprings;
     }
     
@@ -117,7 +97,12 @@ ne_network* ne_population::select() {
         }
     }
     
-    return networks[idx];
+    size_t idx = 0;
+    for(size_t i = 0; i < size; ++i)
+        if(genomes[i]->fitness > genomes[idx]->fitness)
+            idx = i;
+    
+    return genomes[idx];
 }
 
 void ne_population::reproduce() {
@@ -125,22 +110,24 @@ void ne_population::reproduce() {
     
     map.clear();
     
-    std::vector<ne_network*> ns;
+    std::vector<ne_genome*> ns;
     
     for(ne_species* sp : species) {
         for(size_t n = 0; n != sp->offsprings; ++n) {
             ns.push_back(_breed(sp));
         }
         
-        size_t n = sp->networks.size() - 1;
+        size_t n = sp->genomes.size() - 1;
+        if(sp->offsprings == 0) ++n;
+        
         for(size_t i = 0; i != n; ++i) {
-            sp->networks[i]->killed = true;
+            sp->genomes[i]->killed = true;
         }
     }
     
     _kill();
     
-    size_t size = networks.size();
+    size_t size = genomes.size();
     
     size_t ss = species.size();
     
@@ -149,23 +136,19 @@ void ne_population::reproduce() {
         ns.push_back(_breed(sp));
     }
     
-    for(ne_network* network : ns) {
-        networks.push_back(network);
-        _add(network);
-    }
-    
-    for(ne_network* network : networks) {
-        ++network->age;
+    for(ne_genome* g : ns) {
+        genomes.push_back(g);
+        _add(g);
     }
 }
 
-void ne_population::_add(ne_network* n) {
+void ne_population::_add(ne_genome* g) {
     ne_species* sp = nullptr;
     float mc = params.species_thresh;
     
     for(ne_species* s : species) {
-        ne_network* j = s->networks.front();
-        float ts = ne_network::distance(n, j, params);
+        ne_genome* j = s->genomes.front();
+        float ts = ne_distance(g, j, params);
         if(ts < mc) {
             mc = ts;
             sp = s;
@@ -177,25 +160,25 @@ void ne_population::_add(ne_network* n) {
         species.push_back(sp);
     }
     
-    n->sp = sp;
-    sp->networks.push_back(n);
+    g->sp = sp;
+    sp->genomes.push_back(g);
 }
 
-void ne_population::_remove(ne_network* n) {
-    std::vector<ne_network*>::iterator it = n->sp->networks.end();
-    std::vector<ne_network*>::iterator b = n->sp->networks.begin();
+void ne_population::_remove(ne_genome* g) {
+    std::vector<ne_genome*>::iterator it = g->sp->genomes.end();
+    std::vector<ne_genome*>::iterator b = g->sp->genomes.begin();
     while(it-- != b) {
-        if(*it == n) {
-            n->sp->networks.erase(it);
-
-            if(n->sp->networks.empty()) {
+        if(*it == g) {
+            g->sp->genomes.erase(it);
+            
+            if(g->sp->genomes.empty()) {
                 std::vector<ne_species*>::iterator q = species.end();
                 std::vector<ne_species*>::iterator p = species.begin();
                 
                 while(q-- != p) {
-                    if(*q == n->sp) {
+                    if(*q == g->sp) {
                         species.erase(q);
-                        delete n->sp;
+                        delete g->sp;
                         break;
                     }
                 }
