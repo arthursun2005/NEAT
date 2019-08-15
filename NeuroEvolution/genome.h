@@ -17,9 +17,9 @@ struct ne_genome
 {
     ne_genome() {}
     
-    ne_genome(const ne_genome& network);
+    ne_genome(const ne_genome& genome);
     
-    ne_genome& operator = (const ne_genome& network);
+    ne_genome& operator = (const ne_genome& genome);
     
     ~ne_genome() {
         clear();
@@ -55,7 +55,7 @@ struct ne_genome
     void insert(ne_gene* gene);
     
     void flush();
-    
+        
     void _compute(const ne_params& params);
         
     void mutate_weights(const ne_params& params);

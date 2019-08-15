@@ -18,15 +18,15 @@ ne_population population;
 std::ofstream log_file;
 std::ofstream pos_file;
 
-int gens = 32;
+int gens = 64;
 int pop = 256;
 
 int trials = 8;
 
 struct Obj
 {
-    static const int input_size;
-    static const int output_size;
+    static const size_t input_size;
+    static const size_t output_size;
     
     double reward;
     
@@ -36,8 +36,8 @@ struct Obj
 struct Pendulum : public Obj
 {
     
-    static const int input_size = 5;
-    static const int output_size = 1;
+    static const size_t input_size = 5;
+    static const size_t output_size = 1;
     
     double x;
     double vx;
@@ -132,12 +132,14 @@ struct Pendulum : public Obj
 
 struct XOR : public Obj
 {
-    static const int input_size = 2;
-    static const int output_size = 1;
+    static const size_t input_size = 2;
+    static const size_t output_size = 1;
     
     void run(ne_genome* gen) {
         for(int a = 0; a < 2; ++a) {
             for(int b = 0; b < 2; ++b) {
+                gen->flush();
+                
                 int c = a ^ b;
                 
                 ne_node* inputs = gen->inputs();
@@ -155,7 +157,7 @@ struct XOR : public Obj
     }
 };
 
-typedef Pendulum obj_type;
+typedef XOR obj_type;
 
 std::vector<obj_type> objs(pop);
 
@@ -209,12 +211,14 @@ int main(int argc, const char * argv[]) {
         log_file << "fitness: " << best->fitness << "  complexity: " << best->complexity() << "  size: " << best->size() << std::endl;
         
         log_file << std::endl << std::endl << std::endl;
-        
+                
         log_file.flush();
+        
+        std::cout << best->fitness << std::endl;
         
         population.reproduce();
     }
-    
+    /*
     Pendulum p;
     p.reward = 0.0;
     
@@ -228,7 +232,7 @@ int main(int argc, const char * argv[]) {
     }
     
     log_file << p.reward << std::endl;
-        
+     */
     log_file.close();
     pos_file.close();
     return 0;

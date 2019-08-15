@@ -51,6 +51,7 @@ void ne_genome::flush() {
     
     for(size_t i = input_size; i < size; ++i) {
         nodes[i].activations = 0;
+        nodes[i].value = 0.0;
     }
 }
 
@@ -60,7 +61,7 @@ void ne_genome::_compute(const ne_params& params) {
     
     size_t n = 0;
     
-    while(n != params.activations_per_second) {
+    while(n != params.activations) {
         for(size_t i = input_size; i < size; ++i) {
             nodes[i].computed = false;
             nodes[i].sum = 0.0;
@@ -123,30 +124,34 @@ void ne_genome::mutate_topology_add_node(ne_innov_map *map, size_t *innov, const
     size_t gs = genes.size();
     
     if(gs != 0) {
-        ne_gene* gene = genes[rand64() % gs];
-        
-        if(!gene->enabled) return;
-        
-        size_t node = create_node();
-        
-        gene->enabled = false;
-        
-        {
-            ne_gene* gene1 = new ne_gene(gene->link->i, node, get_innov(map, innov, ne_innov(gene->link->i, node)));
+        for(size_t n = 0; n != params.timeout; ++n) {
+            ne_gene* gene = genes[rand64() % gs];
+            
+            if(!gene->enabled) continue;
+            
+            size_t node = create_node();
+            
+            gene->enabled = false;
+            
+            {
+                ne_gene* gene1 = new ne_gene(gene->link->i, node, get_innov(map, innov, ne_innov(gene->link->i, node)));
 
-            gene1->link->weight = 1.0;
-            gene1->enabled = true;
+                gene1->link->weight = 1.0;
+                gene1->enabled = true;
+                
+                insert(gene1);
+            }
             
-            insert(gene1);
-        }
-        
-        {
-            ne_gene* gene2 = new ne_gene(node, gene->link->j, get_innov(map, innov, ne_innov(gene->link->i, node)));
+            {
+                ne_gene* gene2 = new ne_gene(node, gene->link->j, get_innov(map, innov, ne_innov(node, gene->link->j)));
+                
+                gene2->link->weight = gene->link->weight;
+                gene2->enabled = true;
+                
+                insert(gene2);
+            }
             
-            gene2->link->weight = gene->link->weight;
-            gene2->enabled = true;
-            
-            insert(gene2);
+            break;
         }
     }
 }
@@ -187,18 +192,18 @@ void ne_genome::mutate_toggle_link_enable(size_t times) {
     }
 }
 
-ne_genome::ne_genome(const ne_genome& network) {
-    *this = network;
+ne_genome::ne_genome(const ne_genome& genome) {
+    *this = genome;
 }
 
-ne_genome& ne_genome::operator = (const ne_genome &network) {
-    reset(network.input_size - 1, network.output_size);
+ne_genome& ne_genome::operator = (const ne_genome &genome) {
+    reset(genome.input_size - 1, genome.output_size);
     
-    nodes = network.nodes;
+    nodes = genome.nodes;
     
-    fitness = network.fitness;
+    fitness = genome.fitness;
     
-    for(ne_gene* gene : network.genes) {
+    for(ne_gene* gene : genome.genes) {
         insert(new ne_gene(*gene));
     }
     
@@ -311,8 +316,7 @@ double ne_distance(const ne_genome *A, const ne_genome *B, const ne_params& para
         }
         
         if((*itA)->innov == (*itB)->innov) {
-            double d = (*itA)->link->weight - (*itB)->link->weight;
-            W += d * d;
+            W += fabs((*itA)->link->weight - (*itB)->link->weight);
             ++n;
             
             ++itA;
@@ -325,6 +329,6 @@ double ne_distance(const ne_genome *A, const ne_genome *B, const ne_params& para
             ++itB;
         }
     }
-    
-    return miss / (double) (n + miss) + params.weights_power * sqrtf(W / (double) n);
+
+    return miss / (double) (n + miss) + params.weights_power * W / (double) n;
 }

@@ -39,10 +39,9 @@ void ne_population::_kill() {
     
     while(it-- != begin) {
         if((*it)->killed) {
-            ne_genome* g = *it;
-            _remove(g);
+            _remove(*it);
+            delete *it;
             genomes.erase(it);
-            delete g;
         }
     }
 }
@@ -100,14 +99,15 @@ void ne_population::reproduce() {
     std::vector<ne_genome*> ns;
     
     for(ne_species* sp : species) {
-        for(size_t n = 0; n != sp->offsprings; ++n) {
-            ns.push_back(_breed(sp));
+        size_t n = sp->genomes.size();
+        
+        if(sp->offsprings != 0) {
+            for(size_t n = 1; n != sp->offsprings; ++n) {
+                ns.push_back(_breed(sp));
+            }
+            
+            --n;
         }
-        
-        size_t n = sp->genomes.size() - 1;
-        
-        if(sp->offsprings == 0)
-            ++n;
         
         for(size_t i = 0; i != n; ++i) {
             sp->genomes[i]->killed = true;
@@ -115,22 +115,21 @@ void ne_population::reproduce() {
     }
     
     _kill();
-    
+        
     size_t size = genomes.size();
     size_t ss = species.size();
+    size_t i = 0;
     
-    while(size + ns.size() < params.population) {
-        ne_species* sp = species[rand64() % ss];
+    while(size + ns.size() != params.population) {
+        ne_species* sp = species[i];
         ns.push_back(_breed(sp));
-    }
         
+        i = (i + 1) % ss;
+    }
+    
     for(ne_genome* g : ns) {
-        if(genomes.size() != params.population) {
-            genomes.push_back(g);
-            _add(g);
-        }else{
-            delete g;
-        }
+        genomes.push_back(g);
+        _add(g);
     }
 }
 

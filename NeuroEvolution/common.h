@@ -21,7 +21,7 @@ inline uint32_t rand32() {
 inline uint64_t rand64() {
     return rand32() | ((uint64_t)(rand32()) << 32);
 }
-    
+
 inline double gaussian_random() {
     thread_local std::default_random_engine g;
     thread_local std::normal_distribution<double> d(0.0, 1.0);

@@ -33,29 +33,29 @@ struct ne_params {
     double mate_avg_prob;
     double disable_inheritance;
     
-    size_t activations_per_second;
+    size_t activations;
     size_t timeout;
     size_t population;
     size_t input_size;
     size_t output_size;
     
     ne_params() {
-        weights_power = 0.25;
-        species_thresh = 0.5;
+        weights_power = 0.5;
+        species_thresh = 2.0;
         kill_ratio = 0.5;
         interspecies_mate_prob = 0.01;
         new_node_prob = 0.03;
         new_link_prob = 0.05;
         toggle_link_enable_prob = 0.1;
         mutate_weights_prob = 0.75;
-        mate_prob = 0.75;
+        mate_prob = 0.0;
         weights_reset_prob = 0.1;
-        weights_mutation_power = 0.5;
+        weights_mutation_power = 2.0;
         mate_avg_prob = 0.5;
         disable_inheritance = 0.75;
         
-        activations_per_second = 16;
-        timeout = 8;
+        activations = 16;
+        timeout = 16;
         population = 256;
     }
 };
@@ -119,15 +119,11 @@ struct ne_node
     size_t activations;
 };
 
-inline size_t ne_hashi2(size_t i, size_t j) {
-    return (i ^ j) + 71 * i;
-}
-
 template <>
 struct std::hash<ne_innov>
 {
     inline size_t operator () (const ne_innov& x) const {
-        return ne_hashi2(x.i, x.j);
+        return (x.i ^ x.j) + 31 * x.i;
     }
 };
 
@@ -145,7 +141,9 @@ inline size_t get_innov(ne_innov_map* map, size_t* innov, const ne_innov& i) {
     if(it != map->end()) {
         return it->second;
     }else{
-        return (*innov)++;
+        size_t new_innov = (*innov)++;
+        map->insert({i, new_innov});
+        return new_innov;
     }
 }
 
