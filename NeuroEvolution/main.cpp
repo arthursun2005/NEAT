@@ -211,12 +211,14 @@ int main(int argc, const char * argv[]) {
         log_file << "fitness: " << best->fitness << "  complexity: " << best->complexity() << "  size: " << best->size() << std::endl;
         
         log_file << std::endl << std::endl << std::endl;
-                
-        log_file.flush();
         
-        std::cout << best->fitness << std::endl;
+        log_file.flush();
+    
+        std::cout << n << "\t" << best->fitness << "\t" << std::endl;
         
         population.reproduce();
+        
+        
     }
     /*
     Pendulum p;

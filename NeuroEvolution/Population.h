@@ -17,21 +17,41 @@ class ne_population
 public:
     
     ~ne_population() {
-        for(ne_species* sp : species) {
-            delete sp;
-        }
-        
         for(ne_genome* genome : genomes) {
             delete genome;
         }
+        
+        for(ne_species* sp : species) {
+            delete sp;
+        }
+    }
+    
+    ne_population() {}
+    
+    ne_population(const ne_population& population) {
+        *this = population;
+    }
+    
+    ne_population& operator = (const ne_population& population) {
+        params = population.params;
+        
+        _kill();
+        
+        genomes.resize(params.population);
+        
+        for(size_t i = 0; i < params.population; ++i) {
+            genomes[i] = new ne_genome(*population.genomes[i]);
+        }
+        
+        innovation = population.innovation;
+        
+        return *this;
     }
     
     inline void reset(const ne_params& _params) {
         params = _params;
         
-        for(ne_genome* genome : genomes) {
-            delete genome;
-        }
+        _kill();
         
         genomes.resize(params.population);
         
@@ -39,15 +59,12 @@ public:
             genome = new ne_genome();
         }
         
-        map.clear();
         innovation = 0;
         
         for(ne_genome* genome : genomes) {
             genome->reset(params.input_size, params.output_size);
             genome->initialize(&map, &innovation);
         }
-        
-        _speciate();
     }
     
     inline ne_genome* operator [] (size_t i) {
@@ -69,6 +86,9 @@ public:
         
     ne_params params;
     
+    size_t alive_after;
+    size_t parents;
+    
 private:
     
     ne_innov_map map;
@@ -76,22 +96,8 @@ private:
     ne_genome* _breed(ne_species* sp);
     
     void _kill();
-    
-    void _add(ne_genome* g);
-    
-    void _remove(ne_genome* g);
-    
-    inline void _speciate() {
-        for(ne_species* sp : species) {
-            delete sp;
-        }
         
-        species.clear();
-        
-        for(ne_genome* n : genomes) {
-            _add(n);
-        }
-    }
+    void _speciate();
     
 };
 

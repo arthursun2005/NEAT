@@ -24,8 +24,8 @@ struct ne_params {
     double kill_ratio;
     double interspecies_mate_prob;
     double new_node_prob;
-    double new_link_prob;
-    double toggle_link_enable_prob;
+    double new_gene_prob;
+    double toggle_gene_enable_prob;
     double mutate_weights_prob;
     double mate_prob;
     double weights_reset_prob;
@@ -45,10 +45,10 @@ struct ne_params {
         kill_ratio = 0.5;
         interspecies_mate_prob = 0.01;
         new_node_prob = 0.03;
-        new_link_prob = 0.05;
-        toggle_link_enable_prob = 0.1;
+        new_gene_prob = 0.05;
+        toggle_gene_enable_prob = 0.1;
         mutate_weights_prob = 0.75;
-        mate_prob = 0.0;
+        mate_prob = 0.75;
         weights_reset_prob = 0.1;
         weights_mutation_power = 2.0;
         mate_avg_prob = 0.5;
@@ -123,7 +123,7 @@ template <>
 struct std::hash<ne_innov>
 {
     inline size_t operator () (const ne_innov& x) const {
-        return (x.i ^ x.j) + 31 * x.i;
+        return (x.i ^ x.j) + 331 * x.i;
     }
 };
 

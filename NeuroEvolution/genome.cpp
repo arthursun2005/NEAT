@@ -21,8 +21,6 @@ void ne_genome::reset(size_t inputs, size_t outputs) {
     }
     
     nodes[input_size - 1].value = 1.0;
-    
-    killed = false;
 }
 
 void ne_genome::clear() {
@@ -156,7 +154,7 @@ void ne_genome::mutate_topology_add_node(ne_innov_map *map, size_t *innov, const
     }
 }
 
-void ne_genome::mutate_topology_add_link(ne_innov_map *map, size_t *innov, const ne_params& params) {
+void ne_genome::mutate_topology_add_gene(ne_innov_map *map, size_t *innov, const ne_params& params) {
     size_t size = nodes.size();
     
     for(size_t n = 0; n != params.timeout; ++n) {
@@ -181,7 +179,7 @@ void ne_genome::mutate_topology_add_link(ne_innov_map *map, size_t *innov, const
     }
 }
 
-void ne_genome::mutate_toggle_link_enable(size_t times) {
+void ne_genome::mutate_toggle_gene_enable(size_t times) {
     size_t gs = genes.size();
     
     if(gs != 0) {
@@ -218,6 +216,8 @@ void ne_crossover(const ne_genome* A, const ne_genome* B, ne_genome* C, const ne
     
     bool avg = ne_random() < params.mate_avg_prob;
     
+    bool aBetter = A->fitness > B->fitness;
+    
     C->fitness = (A->fitness + B->fitness) * 0.5;
     
     std::vector<ne_gene*>::const_iterator itA, itB;
@@ -229,8 +229,10 @@ void ne_crossover(const ne_genome* A, const ne_genome* B, ne_genome* C, const ne
         size_t i, j, innov;
         double weight;
         bool enabled;
+        bool skip = false;
         
         if(itA == A->genes.end()) {
+            skip = aBetter;
             i = (*itB)->link->i;
             j = (*itB)->link->j;
             innov = (*itB)->innov;
@@ -238,6 +240,7 @@ void ne_crossover(const ne_genome* A, const ne_genome* B, ne_genome* C, const ne
             enabled = (*itB)->enabled;
             ++itB;
         }else if(itB == B->genes.end()) {
+            skip = !aBetter;
             i = (*itA)->link->i;
             j = (*itA)->link->j;
             innov = (*itA)->innov;
@@ -265,6 +268,7 @@ void ne_crossover(const ne_genome* A, const ne_genome* B, ne_genome* C, const ne
             ++itA;
             ++itB;
         }else if((*itA)->innov < (*itB)->innov) {
+            skip = !aBetter;
             i = (*itA)->link->i;
             j = (*itA)->link->j;
             innov = (*itA)->innov;
@@ -272,6 +276,7 @@ void ne_crossover(const ne_genome* A, const ne_genome* B, ne_genome* C, const ne
             enabled = (*itA)->enabled;
             ++itA;
         }else{
+            skip = aBetter;
             i = (*itB)->link->i;
             j = (*itB)->link->j;
             innov = (*itB)->innov;
@@ -280,14 +285,15 @@ void ne_crossover(const ne_genome* A, const ne_genome* B, ne_genome* C, const ne
             ++itB;
         }
         
-        ne_innov in(i, j);
-        
-        auto it = C->set.find(in);
-        if(it == C->set.end()) {
-            ne_gene* gene = new ne_gene(i, j, innov);
-            gene->link->weight = weight;
-            gene->enabled = enabled;
-            C->insert(gene);
+        if(!skip) {
+            ne_innov in(i, j);
+            auto it = C->set.find(in);
+            if(it == C->set.end()) {
+                ne_gene* gene = new ne_gene(i, j, innov);
+                gene->link->weight = weight;
+                gene->enabled = enabled;
+                C->insert(gene);
+            }
         }
     }
 }
@@ -316,7 +322,8 @@ double ne_distance(const ne_genome *A, const ne_genome *B, const ne_params& para
         }
         
         if((*itA)->innov == (*itB)->innov) {
-            W += fabs((*itA)->link->weight - (*itB)->link->weight);
+            double d = (*itA)->link->weight - (*itB)->link->weight;
+            W += d * d;
             ++n;
             
             ++itA;
@@ -330,5 +337,5 @@ double ne_distance(const ne_genome *A, const ne_genome *B, const ne_params& para
         }
     }
 
-    return miss / (double) (n + miss) + params.weights_power * W / (double) n;
+    return miss / (double) (n + miss) + params.weights_power * sqrt(W / (double) n);
 }

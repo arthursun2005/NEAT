@@ -62,16 +62,13 @@ struct ne_genome
     
     void mutate_topology_add_node(ne_innov_map* map, size_t* innov, const ne_params& params);
     
-    void mutate_topology_add_link(ne_innov_map* map, size_t* innov, const ne_params& params);
+    void mutate_topology_add_gene(ne_innov_map* map, size_t* innov, const ne_params& params);
     
-    void mutate_toggle_link_enable(size_t times);
+    void mutate_toggle_gene_enable(size_t times);
     
     double fitness;
-    
-    ne_species* sp;
-    
-    bool killed;
-    
+    double adjusted_fitness;
+        
     ne_innov_set set;
     
     size_t input_size;
@@ -85,24 +82,28 @@ inline bool ne_genome_sort(const ne_genome* a, const ne_genome* b) {
     return a->fitness < b->fitness;
 }
 
+inline bool ne_genome_adjusted_sort(const ne_genome* a, const ne_genome* b) {
+    return a->adjusted_fitness < b->adjusted_fitness;
+}
+
 void ne_crossover(const ne_genome* A, const ne_genome* B, ne_genome* C, const ne_params& params);
 double ne_distance(const ne_genome* A, const ne_genome* B, const ne_params& params);
 
 inline void ne_mutate(ne_genome* genome, const ne_params& params, ne_innov_map* map, size_t* innov) {
-    if(ne_random() < params.mutate_weights_prob) {
-        genome->mutate_weights(params);
-    }
-    
-    if(ne_random() < params.toggle_link_enable_prob) {
-        genome->mutate_toggle_link_enable(1);
-    }
-    
     if(ne_random() < params.new_node_prob) {
         genome->mutate_topology_add_node(map, innov, params);
     }
     
-    if(ne_random() < params.new_link_prob) {
-        genome->mutate_topology_add_link(map, innov, params);
+    if(ne_random() < params.new_gene_prob) {
+        genome->mutate_topology_add_gene(map, innov, params);
+    }
+    
+    if(ne_random() < params.mutate_weights_prob) {
+        genome->mutate_weights(params);
+    }
+    
+    if(ne_random() < params.toggle_gene_enable_prob) {
+        genome->mutate_toggle_gene_enable(1);
     }
 }
 
