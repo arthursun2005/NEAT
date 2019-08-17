@@ -148,7 +148,8 @@ struct XOR : public Obj
                 inputs[0].value = a;
                 inputs[1].value = b;
                 
-                population.compute(gen);
+                while(!gen->done())
+                    population.compute(gen);
                 
                 double d = outputs[0].value - c;
                 reward += 1.0 - d * d;
@@ -217,8 +218,6 @@ int main(int argc, const char * argv[]) {
         std::cout << n << "\t" << best->fitness << "\t" << std::endl;
         
         population.reproduce();
-        
-        
     }
     /*
     Pendulum p;

@@ -22,7 +22,7 @@ struct ne_genome
     ne_genome& operator = (const ne_genome& genome);
     
     ~ne_genome() {
-        clear();
+        _destory_genes();
     }
     
     inline ne_node* inputs() {
@@ -44,7 +44,7 @@ struct ne_genome
     void write(std::ofstream& out);
     void read(std::ifstream& in);
     
-    void clear();
+    void _destory_genes();
     
     size_t create_node();
     
@@ -55,6 +55,8 @@ struct ne_genome
     void insert(ne_gene* gene);
     
     void flush();
+    
+    bool done() const;
         
     void _compute(const ne_params& params);
         
@@ -74,6 +76,8 @@ struct ne_genome
     size_t input_size;
     size_t output_size;
     
+    size_t activations;
+    
     std::vector<ne_node> nodes;
     std::vector<ne_gene*> genes;
 };
@@ -89,22 +93,28 @@ inline bool ne_genome_adjusted_sort(const ne_genome* a, const ne_genome* b) {
 void ne_crossover(const ne_genome* A, const ne_genome* B, ne_genome* C, const ne_params& params);
 double ne_distance(const ne_genome* A, const ne_genome* B, const ne_params& params);
 
-inline void ne_mutate(ne_genome* genome, const ne_params& params, ne_innov_map* map, size_t* innov) {
+inline bool ne_mutate(ne_genome* genome, const ne_params& params, ne_innov_map* map, size_t* innov) {
     if(ne_random() < params.new_node_prob) {
         genome->mutate_topology_add_node(map, innov, params);
+        return true;
     }
     
     if(ne_random() < params.new_gene_prob) {
         genome->mutate_topology_add_gene(map, innov, params);
+        return true;
     }
     
     if(ne_random() < params.mutate_weights_prob) {
         genome->mutate_weights(params);
+        return true;
     }
     
     if(ne_random() < params.toggle_gene_enable_prob) {
         genome->mutate_toggle_gene_enable(1);
+        return true;
     }
+    
+    return false;
 }
 
 

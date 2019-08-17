@@ -16,9 +16,9 @@ struct ne_species
     std::vector<ne_genome*> genomes;
     
     double avg_fitness;
+    
     size_t alive_after;
     size_t parents;
-    
     size_t offsprings;
 };
 

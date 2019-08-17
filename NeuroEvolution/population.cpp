@@ -33,6 +33,26 @@ ne_genome* ne_population::_breed(ne_species *sp) {
 ne_genome* ne_population::select() {
     _speciate();
     
+    size_t idx = 0;
+    for(size_t i = 0; i < params.population; ++i) {
+        if(isnan(genomes[i]->fitness))
+            genomes[i]->fitness = 0.0;
+        
+        if(genomes[i]->fitness > genomes[idx]->fitness)
+            idx = i;
+    }
+    
+    size_t ss = species.size();
+    
+    if(params.num_of_species != 0) {
+        if(ss > params.num_of_species) {
+            params.species_thresh += params.species_mod;
+        }else if(ss < params.num_of_species) {
+            if(params.species_thresh > params.species_mod)
+                params.species_thresh -= params.species_mod;
+        }
+    }
+    
     size_t offsprings = 0;
     alive_after = 0;
     
@@ -51,15 +71,14 @@ ne_genome* ne_population::select() {
         
         sp->avg_fitness = 0.0;
         
-        for(ne_genome* g : sp->genomes) {
-            if(isnan(g->fitness) || g->fitness < 0.0)
-                g->fitness = 0.0;
+        for(size_t i = 0; i < spsize; ++i) {
+            if(i >= sp->alive_after)
+                sp->avg_fitness += std::max(0.0, sp->genomes[i]->fitness);
             
-            sp->avg_fitness += g->fitness;
-            g->adjusted_fitness = g->fitness * inv_size;
+            sp->genomes[i]->adjusted_fitness = sp->genomes[i]->fitness * inv_size;
         }
         
-        sp->avg_fitness *= inv_size;
+        sp->avg_fitness /= (double) sp->parents;
         
         total_rank += sp->avg_fitness;
     }
@@ -70,11 +89,11 @@ ne_genome* ne_population::select() {
     parents = params.population - alive_after;
     
     for(ne_species* sp : species) {
-        sp->offsprings = (size_t)(params.population * sp->avg_fitness / total_rank);
+        sp->offsprings = (size_t)(params.population * (sp->avg_fitness / total_rank));
         offsprings += sp->offsprings;
     }
     
-    std::sort(species.data(), species.data() + species.size(), ne_species_sort);
+    std::sort(species.data(), species.data() + ss, ne_species_sort);
     
     size_t leftover = params.population - offsprings;
     while(leftover != 0) {
@@ -84,11 +103,6 @@ ne_genome* ne_population::select() {
             --leftover;
         }
     }
-    
-    size_t idx = 0;
-    for(size_t i = 0; i < params.population; ++i)
-        if(genomes[i]->fitness > genomes[idx]->fitness)
-            idx = i;
     
     return genomes[idx];
 }
@@ -101,9 +115,13 @@ void ne_population::reproduce() {
     std::vector<ne_genome*> ns;
     
     for(ne_species* sp : species) {
-        for(size_t n = 0; n != sp->offsprings; ++n) {
+        if(sp->offsprings == 0) continue;
+        
+        for(size_t n = 1; n != sp->offsprings; ++n) {
             ns.push_back(_breed(sp));
         }
+        
+        ns.push_back(new ne_genome(*sp->genomes.back()));
     }
     
     _kill();
