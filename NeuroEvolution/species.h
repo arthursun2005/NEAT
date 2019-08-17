@@ -15,11 +15,11 @@ struct ne_species
 {
     std::vector<ne_genome*> genomes;
     
-    double avg_fitness;
+    float64 avg_fitness;
     
-    size_t alive_after;
-    size_t parents;
-    size_t offsprings;
+    uint64 alive_after;
+    uint64 parents;
+    uint64 offsprings;
 };
 
 inline bool ne_species_sort (const ne_species* A, const ne_species* B) {

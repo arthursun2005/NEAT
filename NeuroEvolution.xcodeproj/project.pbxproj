@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		8E1F7A0722EF9CF80046AD75 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E1F7A0622EF9CF80046AD75 /* main.cpp */; };
 		8E813D872304E488006052CF /* genome.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E813D862304E488006052CF /* genome.cpp */; };
+		8EF781492307E3F300536F17 /* ne.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8EF781482307E3F300536F17 /* ne.cpp */; };
 		8EF9F43722FFD44100CD6017 /* population.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8EF9F43622FFD44100CD6017 /* population.cpp */; };
 /* End PBXBuildFile section */
 
@@ -35,6 +36,7 @@
 		8E813D852304E479006052CF /* genome.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = genome.h; sourceTree = "<group>"; };
 		8E813D862304E488006052CF /* genome.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = genome.cpp; sourceTree = "<group>"; };
 		8EBEB9E122F78BD200656B66 /* species.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = species.h; sourceTree = "<group>"; };
+		8EF781482307E3F300536F17 /* ne.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ne.cpp; sourceTree = "<group>"; };
 		8EF9F43622FFD44100CD6017 /* population.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = population.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -76,6 +78,7 @@
 				8EBEB9E122F78BD200656B66 /* species.h */,
 				8E813D862304E488006052CF /* genome.cpp */,
 				8E813D852304E479006052CF /* genome.h */,
+				8EF781482307E3F300536F17 /* ne.cpp */,
 				8E1F7A0D22EF9D5A0046AD75 /* ne.h */,
 				8E1F7A0F22EF9D980046AD75 /* common.h */,
 			);
@@ -140,6 +143,7 @@
 			files = (
 				8EF9F43722FFD44100CD6017 /* population.cpp in Sources */,
 				8E813D872304E488006052CF /* genome.cpp in Sources */,
+				8EF781492307E3F300536F17 /* ne.cpp in Sources */,
 				8E1F7A0722EF9CF80046AD75 /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

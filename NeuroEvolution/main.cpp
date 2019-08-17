@@ -19,14 +19,14 @@ std::ofstream log_file;
 std::ofstream pos_file;
 
 int gens = 64;
-int pop = 256;
+ne_params params;
 
 int trials = 8;
 
 struct Obj
 {
-    static const size_t input_size;
-    static const size_t output_size;
+    static const uint64 input_size;
+    static const uint64 output_size;
     
     double reward;
     
@@ -36,8 +36,8 @@ struct Obj
 struct Pendulum : public Obj
 {
     
-    static const size_t input_size = 5;
-    static const size_t output_size = 1;
+    static const uint64 input_size = 5;
+    static const uint64 output_size = 1;
     
     double x;
     double vx;
@@ -132,8 +132,8 @@ struct Pendulum : public Obj
 
 struct XOR : public Obj
 {
-    static const size_t input_size = 2;
-    static const size_t output_size = 1;
+    static const uint64 input_size = 2;
+    static const uint64 output_size = 1;
     
     void run(ne_genome* gen) {
         for(int a = 0; a < 2; ++a) {
@@ -160,30 +160,36 @@ struct XOR : public Obj
 
 typedef XOR obj_type;
 
-std::vector<obj_type> objs(pop);
+std::vector<obj_type> objs(params.population);
 
-void initialize() {
-    ne_params params;
-    params.input_size = obj_type::input_size;
-    params.output_size = obj_type::output_size;
-    params.population = pop;
-    population.reset(params);
+void initialize(const char* file) {
+    std::ifstream in;
+    in.open(file);
+    params.load(in);
+    population.reset(params, obj_type::input_size, obj_type::output_size);
+    
+    objs.resize(params.population);
 }
 
 int main(int argc, const char * argv[]) {
-    log_file.open("log.txt");
-    pos_file.open("pos.txt");
-
-    initialize();
+    if(argc == 1) {
+        std::cout << "No file entered for parameters" << std::endl;
+        return 1;
+    }
+    
+    initialize(argv[1]);
     
     ne_genome* best = nullptr;
+
+    log_file.open("log.txt");
+    pos_file.open("pos.txt");
     
-    log_file << "Population: " << pop << std::endl;
+    log_file << "Population: " << params.population << std::endl;
     
     log_file.flush();
     
     for(int n = 0; n < gens; ++n) {
-        for(int i = 0; i < pop; ++i) {
+        for(int i = 0; i < params.population; ++i) {
             objs[i].reward = 0.0;
             
             objs[i].run(population[i]);
@@ -197,7 +203,7 @@ int main(int argc, const char * argv[]) {
         
         best = population.select();
         
-        for(int i = 0; i < pop; ++i) {
+        for(int i = 0; i < params.population; ++i) {
             log_file << "fitness: " << population[i]->fitness << "  complexity: " << population[i]->complexity() << "  size: " << population[i]->size() << std::endl;
         }
         
