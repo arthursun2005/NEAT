@@ -10,6 +10,7 @@
 		8E1F7A0722EF9CF80046AD75 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E1F7A0622EF9CF80046AD75 /* main.cpp */; };
 		8E813D872304E488006052CF /* genome.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8E813D862304E488006052CF /* genome.cpp */; };
 		8EF781492307E3F300536F17 /* ne.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8EF781482307E3F300536F17 /* ne.cpp */; };
+		8EF7816623080B9700536F17 /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 8EF7816523080B9700536F17 /* Makefile */; };
 		8EF9F43722FFD44100CD6017 /* population.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8EF9F43622FFD44100CD6017 /* population.cpp */; };
 /* End PBXBuildFile section */
 
@@ -37,6 +38,8 @@
 		8E813D862304E488006052CF /* genome.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = genome.cpp; sourceTree = "<group>"; };
 		8EBEB9E122F78BD200656B66 /* species.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = species.h; sourceTree = "<group>"; };
 		8EF781482307E3F300536F17 /* ne.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ne.cpp; sourceTree = "<group>"; };
+		8EF7816423080B8600536F17 /* p1.ne */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = p1.ne; sourceTree = "<group>"; };
+		8EF7816523080B9700536F17 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		8EF9F43622FFD44100CD6017 /* population.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = population.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -73,6 +76,7 @@
 				8E1F7A0622EF9CF80046AD75 /* main.cpp */,
 				8E21D4F222FD882600286DC4 /* log.txt */,
 				8E21D4F122FD6A4500286DC4 /* pos.txt */,
+				8EF7816423080B8600536F17 /* p1.ne */,
 				8EF9F43622FFD44100CD6017 /* population.cpp */,
 				8E1F7A1622F172360046AD75 /* population.h */,
 				8EBEB9E122F78BD200656B66 /* species.h */,
@@ -81,6 +85,7 @@
 				8EF781482307E3F300536F17 /* ne.cpp */,
 				8E1F7A0D22EF9D5A0046AD75 /* ne.h */,
 				8E1F7A0F22EF9D980046AD75 /* common.h */,
+				8EF7816523080B9700536F17 /* Makefile */,
 			);
 			path = NeuroEvolution;
 			sourceTree = "<group>";
@@ -141,6 +146,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8EF7816623080B9700536F17 /* Makefile in Sources */,
 				8EF9F43722FFD44100CD6017 /* population.cpp in Sources */,
 				8E813D872304E488006052CF /* genome.cpp in Sources */,
 				8EF781492307E3F300536F17 /* ne.cpp in Sources */,

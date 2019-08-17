@@ -20,8 +20,8 @@
 
 struct ne_params {
     float64 weights_power;
-    float64 species_mod;
-    float64 species_thresh;
+    float64 compat_mod;
+    float64 compat_thresh;
     float64 kill_ratio;
     float64 interspecies_mate_prob;
     float64 new_node_prob;

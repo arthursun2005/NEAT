@@ -26,7 +26,7 @@ inline uint32 rand32() {
 }
 
 inline uint64 rand64() {
-    return rand32() | ((uint64_t)(rand32()) << 32);
+    return rand32() | ((uint64)(rand32()) << 32);
 }
 
 inline float64 gaussian_random() {

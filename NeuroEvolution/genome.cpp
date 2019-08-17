@@ -224,7 +224,6 @@ ne_genome& ne_genome::operator = (const ne_genome &genome) {
     return *this;
 }
 
-
 void ne_crossover(const ne_genome* A, const ne_genome* B, ne_genome* C, const ne_params& params) {
     C->reset(A->input_size - 1, B->output_size);
     
@@ -239,17 +238,20 @@ void ne_crossover(const ne_genome* A, const ne_genome* B, ne_genome* C, const ne
     itA = A->genes.begin();
     itB = B->genes.begin();
     
+    bool a_over_b = A->adjusted_fitness > B->adjusted_fitness;
+    
+    uint64 i, j, innov;
+    float64 weight;
+    bool enabled, skip;
+    
     while(itA != A->genes.end() || itB != B->genes.end()) {
-        uint64 i, j, innov;
-        float64 weight;
-        bool enabled;
-        
         if(itA == A->genes.end()) {
             i = (*itB)->link->i;
             j = (*itB)->link->j;
             innov = (*itB)->innov;
             weight = (*itB)->link->weight;
             enabled = (*itB)->enabled;
+            skip = a_over_b;
             ++itB;
         }else if(itB == B->genes.end()) {
             i = (*itA)->link->i;
@@ -257,6 +259,7 @@ void ne_crossover(const ne_genome* A, const ne_genome* B, ne_genome* C, const ne
             innov = (*itA)->innov;
             weight = (*itA)->link->weight;
             enabled = (*itA)->enabled;
+            skip = !a_over_b;
             ++itA;
         }else if((*itA)->innov == (*itB)->innov) {
             i = (*itA)->link->i;
@@ -276,6 +279,8 @@ void ne_crossover(const ne_genome* A, const ne_genome* B, ne_genome* C, const ne
                 enabled = false;
             }
             
+            skip = false;
+            
             ++itA;
             ++itB;
         }else if((*itA)->innov < (*itB)->innov) {
@@ -284,6 +289,7 @@ void ne_crossover(const ne_genome* A, const ne_genome* B, ne_genome* C, const ne
             innov = (*itA)->innov;
             weight = (*itA)->link->weight;
             enabled = (*itA)->enabled;
+            skip = !a_over_b;
             ++itA;
         }else{
             i = (*itB)->link->i;
@@ -291,8 +297,11 @@ void ne_crossover(const ne_genome* A, const ne_genome* B, ne_genome* C, const ne
             innov = (*itB)->innov;
             weight = (*itB)->link->weight;
             enabled = (*itB)->enabled;
+            skip = a_over_b;
             ++itB;
         }
+        
+        if(skip) continue;
         
         ne_innov in(i, j);
         auto it = C->set.find(in);

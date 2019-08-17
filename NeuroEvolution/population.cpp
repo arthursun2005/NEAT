@@ -46,10 +46,10 @@ ne_genome* ne_population::select() {
     
     if(params.num_of_species != 0) {
         if(ss > params.num_of_species) {
-            params.species_thresh += params.species_mod;
+            params.compat_thresh += params.compat_mod;
         }else if(ss < params.num_of_species) {
-            if(params.species_thresh > params.species_mod)
-                params.species_thresh -= params.species_mod;
+            if(params.compat_thresh > params.compat_mod)
+                params.compat_thresh -= params.compat_mod;
         }
     }
     
@@ -117,7 +117,7 @@ void ne_population::reproduce() {
     for(ne_species* sp : species) {
         if(sp->offsprings == 0) continue;
         
-        for(uint64 n = 1; n != sp->offsprings; ++n) {
+        for(uint64 n = 0; n != sp->offsprings; ++n) {
             ns.push_back(_breed(sp));
         }
         
@@ -132,7 +132,7 @@ void ne_population::reproduce() {
 void ne_population::_speciate() {
     for(ne_genome* g : genomes) {
         ne_species* sp = nullptr;
-        float64 mc = params.species_thresh;
+        float64 mc = params.compat_thresh;
         
         for(ne_species* s : species) {
             ne_genome* j = s->genomes.front();

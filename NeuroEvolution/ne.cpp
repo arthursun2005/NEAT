@@ -10,8 +10,8 @@
 
 const std::string ne_params::names[] = {
     "weights_power",
-    "species_mod",
-    "species_thresh",
+    "compat_mod",
+    "compat_thresh",
     "kill_ratio",
     "interspecies_mate_prob",
     "new_node_prob",

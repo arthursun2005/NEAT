@@ -116,6 +116,8 @@ struct Pendulum : public Obj
     }
     
     void run(ne_genome* g) {
+        reward = 0.0;
+        
         for(int q = 0; q < trials; ++q) {
             reset();
             g->flush();
@@ -136,6 +138,8 @@ struct XOR : public Obj
     static const uint64 output_size = 1;
     
     void run(ne_genome* gen) {
+        reward = 0.0;
+        
         for(int a = 0; a < 2; ++a) {
             for(int b = 0; b < 2; ++b) {
                 gen->flush();
@@ -155,6 +159,8 @@ struct XOR : public Obj
                 reward += 1.0 - d * d;
             }
         }
+        
+        reward *= 0.25;
     }
 };
 
@@ -190,8 +196,6 @@ int main(int argc, const char * argv[]) {
     
     for(int n = 0; n < gens; ++n) {
         for(int i = 0; i < params.population; ++i) {
-            objs[i].reward = 0.0;
-            
             objs[i].run(population[i]);
             
             population[i]->fitness = objs[i].reward;
