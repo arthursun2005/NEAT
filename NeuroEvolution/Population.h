@@ -92,7 +92,7 @@ public:
     
 private:
     
-    ne_innov_map map;
+    ne_innovation_map map;
     
     ne_genome* _breed(ne_species* sp);
     

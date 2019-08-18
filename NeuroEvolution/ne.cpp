@@ -69,15 +69,14 @@ bool ne_params::load(std::ifstream& in) {
     return true;
 }
 
-uint64 get_innov(ne_innov_map* map, uint64* innov, const ne_innov& i) {
-    auto it = map->find(i);
+uint64 get_innovation(ne_innovation_map* map, uint64* innovation, const ne_innovation& i) {
+    ne_innovation_map::iterator it = map->find(i);
     
     if(it != map->end()) {
         return it->second;
     }else{
-        uint64 new_innov = *innov;
-        ++(*innov);
-        map->insert({i, new_innov});
-        return new_innov;
+        uint64 new_innovation = (*innovation)++;
+        map->insert({i, new_innovation});
+        return new_innovation;
     }
 }

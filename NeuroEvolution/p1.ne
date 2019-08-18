@@ -3,7 +3,7 @@ compat_mod 0.2
 weights_power 0.5
 compat_thresh 1.0
 kill_ratio 0.5
-interspecies_mate_prob 0.005
+interspecies_mate_prob 0.01
 new_node_prob 0.03
 new_gene_prob 0.05
 toggle_gene_enable_prob 0.1

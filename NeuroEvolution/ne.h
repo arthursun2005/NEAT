@@ -60,47 +60,33 @@ inline float64 ne_random(float64 a, float64 b) {
     return ne_random() * (b - a) + a;
 }
 
-struct ne_link {
-    const uint64 i;
-    const uint64 j;
+struct ne_gene
+{
+    uint64 i;
+    uint64 j;
+    uint64 innovation;
     
     float64 weight;
     
-    ne_link(uint64 i, uint64 j) : i(i), j(j) {}
-};
-
-struct ne_gene
-{
-    ne_link* link;
-    const uint64 innov;
-    
     bool enabled;
     
-    ne_gene(uint64 i, uint64 j, uint64 innov) : innov(innov) {
-        link = new ne_link(i, j);
-    }
+    ne_gene() {}
     
-    ne_gene(const ne_gene& gene) : innov(gene.innov), enabled(gene.enabled) {
-        link = new ne_link(*gene.link);
-    }
-    
-    ~ne_gene() {
-        delete link;
-    }
+    ne_gene(uint64 i, uint64 j) : i(i), j(j) {}
 };
 
-struct ne_innov
+struct ne_innovation
 {
-    const uint64 i;
-    const uint64 j;
+    uint64 i;
+    uint64 j;
     
-    ne_innov(const ne_link& link) : i(link.i), j(link.j) {}
+    ne_innovation(const ne_gene& gene) : i(gene.i), j(gene.j) {}
     
-    ne_innov(uint64 i, uint64 j) : i(i), j(j) {}
+    ne_innovation(uint64 i, uint64 j) : i(i), j(j) {}
 };
 
-typedef std::unordered_map<ne_innov, uint64> ne_innov_map;
-typedef std::unordered_set<ne_innov> ne_innov_set;
+typedef std::unordered_map<ne_innovation, uint64> ne_innovation_map;
+typedef std::unordered_set<ne_innovation> ne_innovation_set;
 
 struct ne_node
 {
@@ -111,21 +97,21 @@ struct ne_node
 };
 
 template <>
-struct std::hash<ne_innov>
+struct std::hash<ne_innovation>
 {
-    inline uint64 operator () (const ne_innov& x) const {
+    inline uint64 operator () (const ne_innovation& x) const {
         return (x.i ^ x.j) + 331 * x.i;
     }
 };
 
 template <>
-struct std::equal_to<ne_innov>
+struct std::equal_to<ne_innovation>
 {
-    inline bool operator () (const ne_innov& a, const ne_innov& b) const {
+    inline bool operator () (const ne_innovation& a, const ne_innovation& b) const {
         return a.i == b.i && a.j == b.j;
     }
 };
 
-uint64 get_innov(ne_innov_map* map, uint64* innov, const ne_innov& i);
+uint64 get_innovation(ne_innovation_map* map, uint64* innovation, const ne_innovation& i);
 
 #endif /* ne_h */

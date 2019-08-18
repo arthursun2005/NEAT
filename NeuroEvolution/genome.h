@@ -50,7 +50,7 @@ struct ne_genome
     
     void reset(uint64 inputs, uint64 outputs);
     
-    void initialize(ne_innov_map* map, uint64* innov);
+    void initialize(ne_innovation_map* map, uint64* innovation);
     
     void insert(ne_gene* gene);
     
@@ -62,16 +62,16 @@ struct ne_genome
         
     void mutate_weights(const ne_params& params);
     
-    void mutate_topology_add_node(ne_innov_map* map, uint64* innov, const ne_params& params);
+    void mutate_topology_add_node(ne_innovation_map* map, uint64* innovation, const ne_params& params);
     
-    void mutate_topology_add_gene(ne_innov_map* map, uint64* innov, const ne_params& params);
+    void mutate_topology_add_gene(ne_innovation_map* map, uint64* innovation, const ne_params& params);
     
     void mutate_toggle_gene_enable(uint64 times);
     
     float64 fitness;
     float64 adjusted_fitness;
         
-    ne_innov_set set;
+    ne_innovation_set set;
     
     uint64 input_size;
     uint64 output_size;
@@ -93,14 +93,14 @@ inline bool ne_genome_adjusted_sort(const ne_genome* a, const ne_genome* b) {
 void ne_crossover(const ne_genome* A, const ne_genome* B, ne_genome* C, const ne_params& params);
 float64 ne_distance(const ne_genome* A, const ne_genome* B, const ne_params& params);
 
-inline bool ne_mutate(ne_genome* genome, const ne_params& params, ne_innov_map* map, uint64* innov) {
+inline bool ne_mutate(ne_genome* genome, const ne_params& params, ne_innovation_map* map, uint64* innovation) {
     if(ne_random() < params.new_node_prob) {
-        genome->mutate_topology_add_node(map, innov, params);
+        genome->mutate_topology_add_node(map, innovation, params);
         return true;
     }
     
     if(ne_random() < params.new_gene_prob) {
-        genome->mutate_topology_add_gene(map, innov, params);
+        genome->mutate_topology_add_gene(map, innovation, params);
         return true;
     }
     

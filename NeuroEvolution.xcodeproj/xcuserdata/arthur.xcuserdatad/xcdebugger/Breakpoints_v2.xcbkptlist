@@ -26,7 +26,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/population.cpp"
-            timestampString = "587733500.344822"
+            timestampString = "587805267.206936"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "108"
@@ -42,13 +42,13 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "../../../../../System/Volumes/Data/Users/arthur/work/code/NeuroEvolution/NeuroEvolution/population.h"
-            timestampString = "587730123.0447299"
+            timestampString = "587805267.2069941"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "70"
-            endingLineNumber = "70"
-            landmarkName = "ne_population"
-            landmarkType = "3">
+            startingLineNumber = "72"
+            endingLineNumber = "72"
+            landmarkName = "operator [] (uint64 i)"
+            landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -58,7 +58,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/main.cpp"
-            timestampString = "587733500.344939"
+            timestampString = "587800039.520659"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "196"
@@ -119,14 +119,14 @@
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "NeuroEvolution/genome.cpp"
-            timestampString = "587733500.345041"
+            filePath = "NeuroEvolution/population.cpp"
+            timestampString = "587805267.207075"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "247"
-            endingLineNumber = "247"
-            landmarkName = "ne_crossover(const ne_genome* A, const ne_genome* B, ne_genome* C, const ne_params&amp; params)"
-            landmarkType = "9">
+            startingLineNumber = "97"
+            endingLineNumber = "97"
+            landmarkName = "ne_population::select()"
+            landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -135,14 +135,28 @@
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "NeuroEvolution/population.cpp"
-            timestampString = "587733500.345405"
+            filePath = "NeuroEvolution/genome.cpp"
+            timestampString = "587805267.207119"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "97"
-            endingLineNumber = "97"
-            landmarkName = "ne_population::select()"
-            landmarkType = "7">
+            startingLineNumber = "337"
+            endingLineNumber = "337">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "NeuroEvolution/genome.cpp"
+            timestampString = "587805267.207417"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "261"
+            endingLineNumber = "261"
+            landmarkName = "ne_crossover(const ne_genome* A, const ne_genome* B, ne_genome* C, const ne_params&amp; params)"
+            landmarkType = "9">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>
