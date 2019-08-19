@@ -18,7 +18,7 @@ ne_population population;
 std::ofstream log_file;
 std::ofstream pos_file;
 
-int gens = 64;
+int gens = 48;
 ne_params params;
 
 int trials = 8;
@@ -74,21 +74,21 @@ struct Pendulum : public Obj
     }
     
     void step(double dt, ne_genome* gen) {
-        ne_node* inputs = gen->inputs();
-        ne_node* outputs = gen->outputs();
+        ne_node** inputs = gen->inputs();
+        ne_node** outputs = gen->outputs();
         
         double c = cos(a);
         double s = sin(a);
         
-        inputs[0].value = vx;
-        inputs[1].value = x;
-        inputs[2].value = c;
-        inputs[3].value = s;
-        inputs[4].value = va;
+        inputs[0]->value = vx;
+        inputs[1]->value = x;
+        inputs[2]->value = c;
+        inputs[3]->value = s;
+        inputs[4]->value = va;
         
         population.compute(gen);
         
-        double action = outputs[0].value;
+        double action = outputs[0]->value;
         
         action = action < -1.0 ? -1.0 : (action > 1.0 ? 1.0 : action);
         
@@ -146,16 +146,16 @@ struct XOR : public Obj
                 
                 int c = a ^ b;
                 
-                ne_node* inputs = gen->inputs();
-                ne_node* outputs = gen->outputs();
+                ne_node** inputs = gen->inputs();
+                ne_node** outputs = gen->outputs();
                 
-                inputs[0].value = a;
-                inputs[1].value = b;
+                inputs[0]->value = a;
+                inputs[1]->value = b;
                 
                 while(!gen->done())
                     population.compute(gen);
                 
-                double d = outputs[0].value - c;
+                double d = outputs[0]->value - c;
                 reward += 1.0 - d * d;
             }
         }
@@ -164,7 +164,7 @@ struct XOR : public Obj
     }
 };
 
-typedef XOR obj_type;
+typedef Pendulum obj_type;
 
 std::vector<obj_type> objs(params.population);
 
@@ -186,7 +186,7 @@ int main(int argc, const char * argv[]) {
     initialize(argv[1]);
     
     ne_genome* best = nullptr;
-
+    
     log_file.open("log.txt");
     pos_file.open("pos.txt");
     
@@ -201,20 +201,20 @@ int main(int argc, const char * argv[]) {
             population[i]->fitness = objs[i].reward;
         }
         
-        log_file << std::endl << std::endl << std::endl;
-        
         log_file << "Generation: " << n << std::endl;
         
         best = population.select();
-        
-        for(int i = 0; i < params.population; ++i) {
-            log_file << "fitness: " << population[i]->fitness << "  complexity: " << population[i]->complexity() << "  size: " << population[i]->size() << std::endl;
-        }
         
         log_file << std::endl << std::endl << std::endl;
         
         for(ne_species* sp : population.species) {
             log_file << "Species: " << sp->avg_fitness << "  offsprings: " << sp->offsprings << "  size: " << sp->genomes.size() << std::endl;
+            
+            for(ne_genome* g : sp->genomes) {
+                log_file << "fitness: " << g->fitness << "  complexity: " << g->complexity() << "  size: " << g->size() << std::endl;
+            }
+            
+            log_file << std::endl << std::endl;
         }
         
         log_file << std::endl << std::endl << std::endl;
@@ -229,21 +229,7 @@ int main(int argc, const char * argv[]) {
         
         population.reproduce();
     }
-    /*
-    Pendulum p;
-    p.reward = 0.0;
     
-    p.reset();
-    best->flush();
-    
-    for(int i = 0; i < time_limit; ++i) {
-        p.step(time_step, best);
-        
-        pos_file << p.x << ", " << p.a << "," << std::endl;
-    }
-    
-    log_file << p.reward << std::endl;
-     */
     log_file.close();
     pos_file.close();
     return 0;

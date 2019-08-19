@@ -9,20 +9,23 @@
 #include "ne.h"
 
 const std::string ne_params::names[] = {
+    "align_power",
     "weights_power",
+    "trait_power",
     "compat_mod",
     "compat_thresh",
     "kill_ratio",
     "interspecies_mate_prob",
     "new_node_prob",
     "new_gene_prob",
+    "trait_mutate_prob",
     "toggle_gene_enable_prob",
     "mutate_weights_prob",
     "mate_prob",
-    "weights_reset_prob",
     "weights_mutation_power",
     "mate_avg_prob",
     "disable_inheritance",
+    
     "activations",
     "timeout",
     "population",
@@ -37,7 +40,7 @@ uint64 ne_params::find_index(const std::string& name) const {
             return i;
     }
         
-    return 0;
+    return -1;
 }
 
 bool ne_params::load(std::ifstream& in) {
@@ -52,21 +55,51 @@ bool ne_params::load(std::ifstream& in) {
         uint64 i = find_index(name);
 
         if(i == -1) {
-            return false;
+            std::cout << "Unknown name: " << name << std::endl;
+            in >> name;
+            continue;
         }
-
+        
         if(is_float(i)) {
             float64 x;
             in >> x;
-            (&weights_power)[i] = x;
+            (&align_power)[i] = x;
         }else{
             uint64 x;
             in >> x;
-            ((uint64*)(&weights_power))[i] = x;
+            ((uint64*)(&align_power))[i] = x;
         }
     }
 
     return true;
+}
+
+float64 ne_function::operator () (float64 x) const {
+    switch (type) {
+        case ne_elliot1:
+            return 0.5 * x / (1.0 + fabs(x)) + 0.5;
+            
+        case ne_elliot2:
+            return x / (1.0 + fabs(x));
+            
+        case ne_step1:
+            return x > 0.0 ? 1.0 : 0.0;
+            
+        case ne_step2:
+            return x > 0.0 ? 1.0 : -1.0;
+            
+        case ne_abs:
+            return fabs(x);
+            
+        case ne_linear:
+            return x;
+            
+        case ne_gaussian:
+            return exp(-(x * x) * 0.5);
+            
+        default:
+            return 0.0;
+    }
 }
 
 uint64 get_innovation(ne_innovation_map* map, uint64* innovation, const ne_innovation& i) {

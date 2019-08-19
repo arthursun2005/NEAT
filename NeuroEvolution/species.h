@@ -16,6 +16,7 @@ struct ne_species
     std::vector<ne_genome*> genomes;
     
     float64 avg_fitness;
+    float64 rank;
     
     uint64 alive_after;
     uint64 parents;

@@ -66,6 +66,8 @@ public:
             genome->reset(input_size, output_size);
             genome->initialize(&map, &innovation);
         }
+        
+        node_ids = input_size + output_size + 1;
     }
     
     inline ne_genome* operator [] (uint64 i) {
@@ -89,6 +91,8 @@ public:
     
     uint64 alive_after;
     uint64 parents;
+    
+    uint64 node_ids;
     
 private:
     

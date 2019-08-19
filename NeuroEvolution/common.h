@@ -30,8 +30,8 @@ inline uint64 rand64() {
 }
 
 inline float64 gaussian_random() {
-    thread_local std::default_random_engine g;
-    thread_local std::normal_distribution<float64> d(0.0, 1.0);
+    static std::default_random_engine g;
+    static std::normal_distribution<float64> d(0.0, 1.0);
     return d(g);
 }
 
