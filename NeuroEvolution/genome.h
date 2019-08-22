@@ -41,7 +41,7 @@ struct ne_genome
         return genes.size();
     }
     
-    void write(std::ofstream& out);
+    void write(std::ofstream& out) const;
     void read(std::ifstream& in);
     
     void _destory();
@@ -60,10 +60,8 @@ struct ne_genome
     bool done() const;
         
     void _compute(const ne_params& params);
-    
-    void mutate_trait(uint64 times, const ne_params& params);
-        
-    void mutate_weights(uint64 times, const ne_params& params);
+            
+    void mutate_weights(const ne_params& params);
     
     void mutate_topology_add_node(ne_innovation_map* map, uint64* innovation, uint64* node_ids, const ne_params& params);
     
@@ -73,7 +71,6 @@ struct ne_genome
     
     float64 fitness;
     float64 adjusted_fitness;
-    float64 rank;
     
     ne_innovation_set set;
     ne_nodes_map nodes_map;
@@ -83,16 +80,18 @@ struct ne_genome
     
     uint64 activations;
     
+    bool eliminated;
+    
     std::vector<ne_node*> nodes;
     std::vector<ne_gene*> genes;
 };
 
 inline bool ne_genome_sort(const ne_genome* a, const ne_genome* b) {
-    return a->fitness < b->fitness;
+    return a->fitness > b->fitness;
 }
 
 inline bool ne_genome_adjusted_sort(const ne_genome* a, const ne_genome* b) {
-    return a->adjusted_fitness < b->adjusted_fitness;
+    return a->adjusted_fitness > b->adjusted_fitness;
 }
 
 ne_genome* ne_crossover(const ne_genome* A, const ne_genome* B, const ne_params& params);
@@ -110,12 +109,7 @@ inline bool ne_mutate(ne_genome* genome, ne_innovation_map* map, uint64* innovat
     }
     
     if(ne_random() < params.mutate_weights_prob) {
-        genome->mutate_weights(1, params);
-        return true;
-    }
-    
-    if(ne_random() < params.trait_mutate_prob) {
-        genome->mutate_trait(1, params);
+        genome->mutate_weights(params);
         return true;
     }
     

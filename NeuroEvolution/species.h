@@ -10,15 +10,21 @@
 #define species_h
 
 #include "genome.h"
+#include <limits>
 
 struct ne_species
 {
+    ne_species() {
+        max_fitness = -std::numeric_limits<double>::max();
+        time_since_improvement = 0;
+    }
+    
     std::vector<ne_genome*> genomes;
     
     float64 avg_fitness;
-    float64 rank;
+    float64 max_fitness;
     
-    uint64 alive_after;
+    uint64 time_since_improvement;
     uint64 parents;
     uint64 offsprings;
 };

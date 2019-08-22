@@ -24,7 +24,6 @@ void ne_genome::reset(uint64 inputs, uint64 outputs) {
     for(uint64 i = 0; i < output_size; ++i) {
         ne_node* node = new ne_node();
         node->id = input_size + i;
-        node->function.type = ne_linear;
         insert(node);
     }
     
@@ -82,6 +81,7 @@ void ne_genome::flush() {
 
 void ne_genome::_compute(const ne_params& params) {
     uint64 size = nodes.size();
+    uint64 q = input_size + output_size;
     
     uint64 n = 0;
     
@@ -92,18 +92,22 @@ void ne_genome::_compute(const ne_params& params) {
         }
         
         for(ne_gene* gene : genes) {
-            //if(gene->enabled) {
+            if(gene->enabled) {
                 if(gene->i->activations != 0) {
                     gene->j->computed = true;
                     gene->j->sum += gene->i->value * gene->weight;
                 }
-            //}
+            }
         }
         
         for(uint64 i = input_size; i < size; ++i) {
             if(nodes[i]->computed) {
                 ++nodes[i]->activations;
-                nodes[i]->value = nodes[i]->function(nodes[i]->sum);
+                
+                if(i >= q)
+                    nodes[i]->value = ne_function(nodes[i]->sum);
+                else
+                    nodes[i]->value = nodes[i]->sum;
             }
         }
         
@@ -162,23 +166,10 @@ void ne_genome::pass_down(ne_gene *gene) {
     insert(gene);
 }
 
-void ne_genome::mutate_trait(uint64 times, const ne_params &params) {
-    uint64 ns = nodes.size();
-    
-    for(uint64 n = 0; n < times; ++n) {
-        ne_node* node = nodes[rand64() % ns];
-        node->function.type = rand32() % ne_function_end;
-    }
-}
-
-void ne_genome::mutate_weights(uint64 times, const ne_params& params) {
-    uint64 gs = genes.size();
-    
-    if(gs != 0) {
-        for(uint64 n = 0; n < times; ++n) {
-            ne_gene* gene = genes[rand64() % gs];
+void ne_genome::mutate_weights(const ne_params& params) {
+    for(ne_gene* gene : genes) {
+        if(ne_random() < params.weights_mutation_rate)
             gene->weight += ne_random(-params.weights_mutation_power, params.weights_mutation_power);
-        }
     }
 }
 
@@ -192,7 +183,6 @@ void ne_genome::mutate_topology_add_node(ne_innovation_map *map, uint64 *innovat
             if(!gene->enabled) continue;
             
             ne_node* node = new ne_node();
-            node->function.type = rand32() % ne_function_end;
             node->id = (*node_ids)++;
             insert(node);
             
@@ -386,9 +376,13 @@ float64 ne_distance(const ne_genome *A, const ne_genome *B, const ne_params& par
         }
     }
     
-    uint64 sizeA = A->nodes.size();
-    uint64 sizeB = B->nodes.size();
-    
-    uint64 off_traits = sizeA < sizeB ? sizeB - sizeA : sizeA - sizeB;
-    return params.align_power * miss / (float64) (n + miss) + params.weights_power * sqrt(W / (float64) n);
+    return miss + (n != 0 ? params.weights_power * sqrt(W / (float64) n) : 0.0);
+}
+
+
+
+void ne_genome::write(std::ofstream &out) const {
+}
+
+void ne_genome::read(std::ifstream &in) {
 }

@@ -16,37 +16,36 @@
 #include <iostream>
 #include <vector>
 
-#define ne_func(x) (x / (1.0 + fabs(x)))
+inline float64 ne_function (float64 x) {
+    return x / (1.0 + fabs(x));
+}
 
 struct ne_params {
-    float64 align_power;
     float64 weights_power;
-    float64 trait_power;
-    float64 compat_mod;
     float64 compat_thresh;
-    float64 kill_ratio;
+    float64 survive_thresh;
     float64 interspecies_mate_prob;
     float64 new_node_prob;
     float64 new_gene_prob;
-    float64 trait_mutate_prob;
     float64 toggle_gene_enable_prob;
     float64 mutate_weights_prob;
     float64 mate_prob;
     float64 weights_mutation_power;
+    float64 weights_mutation_rate;
     float64 mate_avg_prob;
     float64 disable_inheritance;
     
     uint64 activations;
     uint64 timeout;
     uint64 population;
-    uint64 num_of_species;
+    uint64 dropoff_age;
 
     static const std::string names[];
 
     static const uint64 n;
-
+    
     inline bool is_float(uint64 i) const {
-        return i < ((uint64*)&activations - (uint64*)&align_power);
+        return i < ((uint64*)&activations - (uint64*)&weights_power);
     }
     
     uint64 find_index(const std::string& name) const;
@@ -62,24 +61,6 @@ inline float64 ne_random(float64 a, float64 b) {
     return ne_random() * (b - a) + a;
 }
 
-enum ne_function_type
-{
-    ne_elliot1 = 0,
-    ne_elliot2,
-    ne_step1,
-    ne_step2,
-    ne_abs,
-    ne_linear,
-    ne_gaussian,
-    ne_function_end
-};
-
-struct ne_function
-{
-    uint32 type;
-    float64 operator () (float64 x) const;
-};
-
 struct ne_node
 {
     float64 value;
@@ -89,8 +70,6 @@ struct ne_node
     
     uint64 activations;
     uint64 id;
-    
-    ne_function function;
 };
 
 struct ne_gene
@@ -127,7 +106,7 @@ template <>
 struct std::hash<ne_innovation>
 {
     inline uint64 operator () (const ne_innovation& x) const {
-        return (x.i ^ x.j) + 331 * x.i;
+        return (x.i ^ x.j) + 3331 * x.i;
     }
 };
 

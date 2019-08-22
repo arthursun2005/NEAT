@@ -17,13 +17,7 @@ class ne_population
 public:
     
     ~ne_population() {
-        for(ne_genome* genome : genomes) {
-            delete genome;
-        }
-        
-        for(ne_species* sp : species) {
-            delete sp;
-        }
+        _kill();
     }
     
     ne_population() {}
@@ -44,6 +38,8 @@ public:
         }
         
         innovation = population.innovation;
+        
+        _speciate();
         
         return *this;
     }
@@ -68,6 +64,8 @@ public:
         }
         
         node_ids = input_size + output_size + 1;
+        
+        _speciate();
     }
     
     inline ne_genome* operator [] (uint64 i) {
@@ -89,7 +87,6 @@ public:
         
     ne_params params;
     
-    uint64 alive_after;
     uint64 parents;
     
     uint64 node_ids;
@@ -103,6 +100,7 @@ private:
     void _kill();
         
     void _speciate();
+    void _add(ne_genome* g);
     
 };
 

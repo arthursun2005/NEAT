@@ -18,10 +18,10 @@ ne_population population;
 std::ofstream log_file;
 std::ofstream pos_file;
 
-int gens = 48;
+int gens = 128;
 ne_params params;
 
-int trials = 8;
+int trials = 1;
 
 struct Obj
 {
@@ -35,7 +35,6 @@ struct Obj
 
 struct Pendulum : public Obj
 {
-    
     static const uint64 input_size = 5;
     static const uint64 output_size = 1;
     
@@ -71,6 +70,8 @@ struct Pendulum : public Obj
         vx = gaussian_random() * stdev;
         a = gaussian_random() * stdev + M_PI;
         va = gaussian_random() * stdev;
+        
+        x = ne_random(-0.75, 0.75) * xt;
     }
     
     void step(double dt, ne_genome* gen) {
@@ -112,7 +113,12 @@ struct Pendulum : public Obj
         q = q > 1.0 ? 1.0 : q;
         q = q < -1.0 ? -1.0 : q;
         
-        reward += 0.5 * (cos(a) + 1.0) * (cos(q * M_PI * 0.5));
+        //reward += 0.5 * (cos(a) + 1.0) * (cos(q * M_PI * 0.5));
+        if(x > -xt && x < xt) {
+            if(cos(a) > 0.99) {
+                reward += 1.0;
+            }
+        }
     }
     
     void run(ne_genome* g) {
@@ -193,7 +199,7 @@ int main(int argc, const char * argv[]) {
     log_file << "Population: " << params.population << std::endl;
     
     log_file.flush();
-    
+        
     for(int n = 0; n < gens; ++n) {
         for(int i = 0; i < params.population; ++i) {
             objs[i].run(population[i]);
@@ -211,10 +217,10 @@ int main(int argc, const char * argv[]) {
             log_file << "Species: " << sp->avg_fitness << "  offsprings: " << sp->offsprings << "  size: " << sp->genomes.size() << std::endl;
             
             for(ne_genome* g : sp->genomes) {
-                log_file << "fitness: " << g->fitness << "  complexity: " << g->complexity() << "  size: " << g->size() << std::endl;
+                //log_file << "fitness: " << g->fitness << "  complexity: " << g->complexity() << "  size: " << g->size() << std::endl;
             }
             
-            log_file << std::endl << std::endl;
+            //log_file << std::endl << std::endl;
         }
         
         log_file << std::endl << std::endl << std::endl;
@@ -224,8 +230,22 @@ int main(int argc, const char * argv[]) {
         log_file << std::endl << std::endl << std::endl;
         
         log_file.flush();
-    
+        
         std::cout << n << "\t" << best->fitness << "\t" << std::endl;
+        
+        if(n == gens - 1) {
+            Pendulum p;
+            p.reset();
+            best->flush();
+            
+            for(int t = 0; t < time_limit; ++t) {
+                p.step(time_step, best);
+                
+                pos_file << p.x << ", " << p.a << ", " << std::endl;
+            }
+            
+            
+        }
         
         population.reproduce();
     }
