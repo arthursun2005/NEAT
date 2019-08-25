@@ -26,47 +26,9 @@ public:
         *this = population;
     }
     
-    ne_population& operator = (const ne_population& population) {
-        params = population.params;
-        
-        _kill();
-        
-        genomes.resize(params.population);
-        
-        for(uint64 i = 0; i < params.population; ++i) {
-            genomes[i] = new ne_genome(*population.genomes[i]);
-        }
-        
-        innovation = population.innovation;
-        
-        _speciate();
-        
-        return *this;
-    }
+    ne_population& operator = (const ne_population& population);
     
-    void reset(const ne_params& _params, uint64 input_size, uint64 output_size) {
-        params = _params;
-        
-        _kill();
-        
-        genomes.resize(params.population);
-        
-        for(ne_genome*& genome : genomes) {
-            genome = new ne_genome();
-        }
-        
-        innovation = 0;
-        map.clear();
-        
-        for(ne_genome* genome : genomes) {
-            genome->reset(input_size, output_size);
-            genome->initialize(&map, &innovation);
-        }
-        
-        node_ids = input_size + output_size + 1;
-        
-        _speciate();
-    }
+    void reset(const ne_params& _params, uint64 input_size, uint64 output_size);
     
     inline ne_genome* operator [] (uint64 i) {
         return genomes[i];
@@ -80,15 +42,13 @@ public:
     
     void reproduce();
     
-    uint64 innovation;
-    
     std::vector<ne_genome*> genomes;
     std::vector<ne_species*> species;
-        
+    
     ne_params params;
     
+    uint64 innovation;
     uint64 parents;
-    
     uint64 node_ids;
     
 private:

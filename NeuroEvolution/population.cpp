@@ -8,24 +8,72 @@
 
 #include "population.h"
 
+ne_population& ne_population::operator = (const ne_population& population) {
+    params = population.params;
+    
+    _kill();
+    
+    genomes.resize(params.population);
+    
+    for(uint64 i = 0; i < params.population; ++i) {
+        genomes[i] = new ne_genome(*population.genomes[i]);
+    }
+    
+    innovation = population.innovation;
+    map = population.map;
+    node_ids = population.node_ids;
+    
+    _speciate();
+    
+    return *this;
+}
+
+void ne_population::reset(const ne_params& _params, uint64 input_size, uint64 output_size) {
+    params = _params;
+    
+    _kill();
+    
+    genomes.resize(params.population);
+    
+    for(ne_genome*& genome : genomes) {
+        genome = new ne_genome();
+    }
+    
+    innovation = 0;
+    map.clear();
+    
+    for(ne_genome* genome : genomes) {
+        genome->reset(input_size, output_size);
+        genome->initialize(&map, &innovation);
+    }
+    
+    node_ids = input_size + output_size + 1;
+    
+    _speciate();
+}
+
 ne_genome* ne_population::_breed(ne_species *sp) {
     ne_genome* baby;
     
-    uint64 i1 = (uint64)(ne_random() * sp->parents);
+    uint64 i1 = random(0, sp->parents);
     
-    if(ne_random() < params.mate_prob) {
-        if(ne_random() < params.interspecies_mate_prob) {
-            uint64 i2 = (uint64)(ne_random() * parents);
-            baby = ne_crossover(sp->genomes[i1], genomes[i2], params);
-        }else{
-            uint64 i2 = (uint64)(ne_random() * sp->parents);
-            baby = ne_crossover(sp->genomes[i1], sp->genomes[i2], params);
-        }
-    }else{
+    if(random(0.0, 1.0) < params.mutate_only_prob) {
         baby = new ne_genome(*sp->genomes[i1]);
+        
+        ne_mutate(baby, &map, &innovation, &node_ids, params);
+    }else{
+        if(random(0.0, 1.0) < params.interspecies_mate_prob) {
+            uint64 i2 = random(0, parents);
+            baby = ne_genome::crossover(sp->genomes[i1], genomes[i2], params);
+        }else{
+            uint64 i2 = random(0, sp->parents);
+            baby = ne_genome::crossover(sp->genomes[i1], sp->genomes[i2], params);
+        }
+        
+        if(random(0.0, 1.0) >= params.mate_only_prob) {
+            ne_mutate(baby, &map, &innovation, &node_ids, params);
+        }
     }
-    
-    ne_mutate(baby, &map, &node_ids, &innovation, params);
     
     baby->eliminated = false;
     
@@ -38,7 +86,7 @@ ne_genome* ne_population::select() {
     uint64 offsprings = 0;
     parents = 0;
     
-    float64 total_rank = 0.0;
+    float64 total_fitness = 0.0;
     
     ne_genome* best = genomes[0];
     for(uint64 i = 0; i < params.population; ++i) {
@@ -48,9 +96,8 @@ ne_genome* ne_population::select() {
     
     for(ne_species* sp : species) {
         uint64 spsize = sp->genomes.size();
-        float64 inv_size = 1.0 / (float64) spsize;
         
-        std::sort(sp->genomes.data(), sp->genomes.data() + spsize, ne_genome_sort);
+        std::sort(sp->genomes.data(), sp->genomes.data() + spsize, ne_genome::compare);
         
         sp->parents = (uint64)ceil(spsize * params.survive_thresh);
         
@@ -64,8 +111,6 @@ ne_genome* ne_population::select() {
             
             if(i < sp->parents)
                 sp->avg_fitness += fmax(0.0, sp->genomes[i]->fitness);
-            
-            sp->genomes[i]->adjusted_fitness = sp->genomes[i]->fitness * inv_size;
         }
         
         sp->avg_fitness /= (float64) sp->parents;
@@ -78,26 +123,25 @@ ne_genome* ne_population::select() {
             ++sp->time_since_improvement;
         }
         
-        if(sp->time_since_improvement >= params.dropoff_age && bf < best->fitness) {
+        if(sp->time_since_improvement > params.dropoff_age && bf < best->fitness) {
             sp->avg_fitness = 0.0;
             
             for(ne_genome* g : sp->genomes) {
-                g->adjusted_fitness = 0.0;
+                g->fitness = 0.0;
             }
         }
         
-        total_rank += sp->avg_fitness;
+        total_fitness += sp->avg_fitness;
     }
     
-    if(total_rank == 0.0)
-        total_rank = 1.0;
-    
-    for(ne_species* sp : species) {
-        sp->offsprings = (uint64)(params.population * (sp->avg_fitness / total_rank));
-        offsprings += sp->offsprings;
+    if(total_fitness != 0.0) {
+        for(ne_species* sp : species) {
+            sp->offsprings = (uint64)(params.population * (sp->avg_fitness / total_fitness));
+            offsprings += sp->offsprings;
+        }
+        
+        std::sort(species.data(), species.data() + ss, ne_species::compare);
     }
-    
-    std::sort(species.data(), species.data() + ss, ne_species_sort);
     
     uint64 leftover = params.population - offsprings;
     while(leftover != 0) {
@@ -112,11 +156,17 @@ ne_genome* ne_population::select() {
 }
 
 void ne_population::reproduce() {
-    map.clear();
+    for(ne_species* sp : species) {
+        float64 inv_size = 1.0 / (float64) sp->genomes.size();
+        
+        for(ne_genome* g : sp->genomes) {
+            g->fitness *= inv_size;
+        }
+    }
     
-    std::sort(genomes.data(), genomes.data() + params.population, ne_genome_adjusted_sort);
+    std::sort(genomes.data(), genomes.data() + params.population, ne_genome::compare);
     
-    std::vector<ne_genome*> ns;
+    std::vector<ne_genome*> babies;
     
     for(ne_species* sp : species) {
         for(ne_genome* g : sp->genomes) {
@@ -125,14 +175,14 @@ void ne_population::reproduce() {
         
         if(sp->offsprings != 0) {
             for(uint64 n = 1; n != sp->offsprings; ++n) {
-                ns.push_back(_breed(sp));
+                babies.push_back(_breed(sp));
             }
             
             sp->genomes.front()->eliminated = false;
         }
     }
-    
-    for(ne_genome* g : ns) {
+
+    for(ne_genome* g : babies) {
         _add(g);
         genomes.push_back(g);
     }
@@ -184,7 +234,7 @@ void ne_population::_add(ne_genome *g) {
     
     for(ne_species* s : species) {
         ne_genome* j = s->genomes.front();
-        float64 ts = ne_distance(g, j, params);
+        float64 ts = ne_genome::distance(g, j, params);
         if(ts < mc) {
             mc = ts;
             sp = s;

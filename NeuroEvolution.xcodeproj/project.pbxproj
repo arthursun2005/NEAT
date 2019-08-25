@@ -32,8 +32,6 @@
 		8E1F7A0D22EF9D5A0046AD75 /* ne.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ne.h; sourceTree = "<group>"; };
 		8E1F7A0F22EF9D980046AD75 /* common.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = common.h; sourceTree = "<group>"; };
 		8E1F7A1622F172360046AD75 /* population.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = population.h; path = ../../../../../../System/Volumes/Data/Users/arthur/work/code/NeuroEvolution/NeuroEvolution/population.h; sourceTree = "<group>"; };
-		8E21D4F122FD6A4500286DC4 /* pos.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = pos.txt; sourceTree = "<group>"; };
-		8E21D4F222FD882600286DC4 /* log.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = log.txt; sourceTree = "<group>"; };
 		8E813D852304E479006052CF /* genome.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = genome.h; sourceTree = "<group>"; };
 		8E813D862304E488006052CF /* genome.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = genome.cpp; sourceTree = "<group>"; };
 		8EBEB9E122F78BD200656B66 /* species.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = species.h; sourceTree = "<group>"; };
@@ -74,8 +72,6 @@
 			isa = PBXGroup;
 			children = (
 				8E1F7A0622EF9CF80046AD75 /* main.cpp */,
-				8E21D4F222FD882600286DC4 /* log.txt */,
-				8E21D4F122FD6A4500286DC4 /* pos.txt */,
 				8EF7816423080B8600536F17 /* p1.ne */,
 				8EF9F43622FFD44100CD6017 /* population.cpp */,
 				8E1F7A1622F172360046AD75 /* population.h */,
@@ -271,7 +267,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = CDS6RVS6JM;
-				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_OPTIMIZATION_LEVEL = 0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -281,7 +277,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = CDS6RVS6JM;
-				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_OPTIMIZATION_LEVEL = 0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;

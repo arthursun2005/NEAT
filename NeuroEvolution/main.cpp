@@ -15,20 +15,15 @@ ne_population population;
 
 #define time_step 0.01f
 
-std::ofstream log_file;
-std::ofstream pos_file;
-
 int gens = 128;
 ne_params params;
-
-int trials = 1;
 
 struct Obj
 {
     static const uint64 input_size;
     static const uint64 output_size;
     
-    double reward;
+    double fitness;
     
     virtual void run(ne_genome* gen) = 0;
 };
@@ -70,70 +65,54 @@ struct Pendulum : public Obj
         vx = gaussian_random() * stdev;
         a = gaussian_random() * stdev + M_PI;
         va = gaussian_random() * stdev;
-        
-        x = ne_random(-0.75, 0.75) * xt;
     }
     
-    void step(double dt, ne_genome* gen) {
+    void run(ne_genome* gen) {
+        fitness = 0.0;
+        
+        gen->flush();
+        
+        reset();
+        
         ne_node** inputs = gen->inputs();
         ne_node** outputs = gen->outputs();
         
-        double c = cos(a);
-        double s = sin(a);
-        
-        inputs[0]->value = vx;
-        inputs[1]->value = x;
-        inputs[2]->value = c;
-        inputs[3]->value = s;
-        inputs[4]->value = va;
-        
-        population.compute(gen);
-        
-        double action = outputs[0]->value;
-        
-        action = action < -1.0 ? -1.0 : (action > 1.0 ? 1.0 : action);
-        
-        action *= f;
-        
-        double va2 = va * va;
-        double sc = s * c;
-        double c2 = c * c;
-
-        double vvx = (-2.0 * m_p * l * va2 * s + 3.0 * m_p * g * sc + 4.0 * action - 4.0 * b * vx) / (4.0 * m - 3.0 * m_p * c2);
-        double vva = (-3.0 * m_p * l * va2 * sc + 6.0 * m * g * s + 6.0 * (action - b * vx) * c) / (4.0 * l * m - 3.0 * m_p * l * c2);
-        
-        vx = vx + vvx * dt;
-        va = va + vva * dt;
-        
-        x = x + vx * dt;
-        a = a + va * dt;
-        
-        double q = x / xt;
-        
-        q = q > 1.0 ? 1.0 : q;
-        q = q < -1.0 ? -1.0 : q;
-        
-        //reward += 0.5 * (cos(a) + 1.0) * (cos(q * M_PI * 0.5));
-        if(x > -xt && x < xt) {
-            if(cos(a) > 0.99) {
-                reward += 1.0;
-            }
-        }
-    }
-    
-    void run(ne_genome* g) {
-        reward = 0.0;
-        
-        for(int q = 0; q < trials; ++q) {
-            reset();
-            g->flush();
+        for(int i = 0; i < time_limit; ++i) {
+            double c = cos(a);
+            double s = sin(a);
             
-            for(int i = 0; i < time_limit; ++i) {
-                step(time_step, g);
-            }
+            inputs[0]->value = vx;
+            inputs[1]->value = x;
+            inputs[2]->value = c;
+            inputs[3]->value = s;
+            inputs[4]->value = va;
+            
+            population.compute(gen);
+            
+            double action = outputs[0]->value;
+            
+            action = action < -1.0 ? -1.0 : (action > 1.0 ? 1.0 : action);
+            
+            action *= f;
+            
+            double va2 = va * va;
+            double sc = s * c;
+            double c2 = c * c;
+            
+            double vvx = (-2.0 * m_p * l * va2 * s + 3.0 * m_p * g * sc + 4.0 * action - 4.0 * b * vx) / (4.0 * m - 3.0 * m_p * c2);
+            double vva = (-3.0 * m_p * l * va2 * sc + 6.0 * m * g * s + 6.0 * (action - b * vx) * c) / (4.0 * l * m - 3.0 * m_p * l * c2);
+            
+            vx = vx + vvx * time_step;
+            va = va + vva * time_step;
+            
+            x = x + vx * time_step;
+            a = a + va * time_step;
+            
+            if(x < -xt || x > xt)
+                break;
+            
+            fitness += 0.5 * (cos(a) + 1.0);
         }
-        
-        reward /= (double) trials;
     }
     
 };
@@ -144,7 +123,7 @@ struct XOR : public Obj
     static const uint64 output_size = 1;
     
     void run(ne_genome* gen) {
-        reward = 0.0;
+        fitness = 0.0;
         
         for(int a = 0; a < 2; ++a) {
             for(int b = 0; b < 2; ++b) {
@@ -158,15 +137,14 @@ struct XOR : public Obj
                 inputs[0]->value = a;
                 inputs[1]->value = b;
                 
-                while(!gen->done())
-                    population.compute(gen);
+                population.compute(gen);
                 
                 double d = outputs[0]->value - c;
-                reward += 1.0 - d * d;
+                fitness += 1.0 - d * d;
             }
         }
         
-        reward *= 0.25;
+        fitness *= 0.25;
     }
 };
 
@@ -193,64 +171,37 @@ int main(int argc, const char * argv[]) {
     
     ne_genome* best = nullptr;
     
-    log_file.open("log.txt");
-    pos_file.open("pos.txt");
-    
-    log_file << "Population: " << params.population << std::endl;
-    
-    log_file.flush();
-        
+    std::vector<float64> highs;
+
     for(int n = 0; n < gens; ++n) {
         for(int i = 0; i < params.population; ++i) {
             objs[i].run(population[i]);
             
-            population[i]->fitness = objs[i].reward;
+            population[i]->fitness = objs[i].fitness;
         }
         
-        log_file << "Generation: " << n << std::endl;
+        std::cout << "Generation: " << n << std::endl;
         
         best = population.select();
         
-        log_file << std::endl << std::endl << std::endl;
-        
         for(ne_species* sp : population.species) {
-            log_file << "Species: " << sp->avg_fitness << "  offsprings: " << sp->offsprings << "  size: " << sp->genomes.size() << std::endl;
-            
-            for(ne_genome* g : sp->genomes) {
-                //log_file << "fitness: " << g->fitness << "  complexity: " << g->complexity() << "  size: " << g->size() << std::endl;
-            }
-            
-            //log_file << std::endl << std::endl;
+            std::cout << "Species: " << sp->avg_fitness << "  offsprings: " << sp->offsprings << "  size: " << sp->genomes.size() << std::endl;
         }
         
-        log_file << std::endl << std::endl << std::endl;
+        std::cout << "fitness: " << best->fitness << "  gene count: " << best->gene_count() << "  node count: " << best->node_count() << std::endl;
         
-        log_file << "fitness: " << best->fitness << "  complexity: " << best->complexity() << "  size: " << best->size() << std::endl;
-        
-        log_file << std::endl << std::endl << std::endl;
-        
-        log_file.flush();
-        
-        std::cout << n << "\t" << best->fitness << "\t" << std::endl;
-        
-        if(n == gens - 1) {
-            Pendulum p;
-            p.reset();
-            best->flush();
-            
-            for(int t = 0; t < time_limit; ++t) {
-                p.step(time_step, best);
-                
-                pos_file << p.x << ", " << p.a << ", " << std::endl;
-            }
-            
-            
-        }
+        std::cout << std::endl << std::endl << std::endl;
+                        
+        highs.push_back(best->fitness);
         
         population.reproduce();
     }
     
-    log_file.close();
-    pos_file.close();
+    std::cout << "Highs: " << std::endl;
+    
+    for(uint64 i = 0; i < gens; ++i) {
+        std::cout << i << "\t" << highs[i] << std::endl;
+    }
+    
     return 0;
 }

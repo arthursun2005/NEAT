@@ -29,6 +29,14 @@ inline uint64 rand64() {
     return rand32() | ((uint64)(rand32()) << 32);
 }
 
+inline float64 random(float64 a, float64 b) {
+    return (rand64() / (float64) (0xffffffffffffffff)) * (b - a) + a;
+}
+
+inline uint64 random(uint64 a, uint64 b) {
+    return random(0.0, 1.0) * (b - a) + a;
+}
+
 inline float64 gaussian_random() {
     static std::default_random_engine g;
     static std::normal_distribution<float64> d(0.0, 1.0);

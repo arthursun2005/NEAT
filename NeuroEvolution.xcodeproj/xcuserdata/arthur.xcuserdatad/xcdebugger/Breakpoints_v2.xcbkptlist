@@ -25,22 +25,6 @@
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "NeuroEvolution/population.h"
-            timestampString = "588166311.220376"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "66"
-            endingLineNumber = "66"
-            landmarkName = "reset(const ne_params&amp; _params, uint64 input_size, uint64 output_size)"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/network.cpp"
             timestampString = "587512486.356573"
             startingColumnNumber = "9223372036854775807"
@@ -87,13 +71,27 @@
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "NeuroEvolution/population.cpp"
-            timestampString = "588166311.2204469"
+            filePath = "NeuroEvolution/genome.cpp"
+            timestampString = "588417154.570437"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "99"
-            endingLineNumber = "99"
-            landmarkName = "ne_population::select()"
+            startingLineNumber = "385"
+            endingLineNumber = "385">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "NeuroEvolution/genome.cpp"
+            timestampString = "588417154.571089"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "311"
+            endingLineNumber = "311"
+            landmarkName = "ne_genome::crossover(const ne_genome* A, const ne_genome* B, const ne_params&amp; params)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -104,13 +102,13 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/genome.cpp"
-            timestampString = "588166311.2205009"
+            timestampString = "588417154.571522"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "363"
-            endingLineNumber = "363"
-            landmarkName = "ne_distance(const ne_genome *A, const ne_genome *B, const ne_params&amp; params)"
-            landmarkType = "9">
+            startingLineNumber = "354"
+            endingLineNumber = "354"
+            landmarkName = "ne_genome::distance(const ne_genome *A, const ne_genome *B, const ne_params&amp; params)"
+            landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -120,13 +118,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/genome.cpp"
-            timestampString = "588166311.220543"
+            timestampString = "588417154.571942"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "285"
-            endingLineNumber = "285"
-            landmarkName = "ne_crossover(const ne_genome* A, const ne_genome* B, const ne_params&amp; params)"
-            landmarkType = "9">
+            startingLineNumber = "382"
+            endingLineNumber = "382">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -136,13 +132,13 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/genome.cpp"
-            timestampString = "588166311.220582"
+            timestampString = "588417154.5723619"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "331"
-            endingLineNumber = "331"
-            landmarkName = "ne_crossover(const ne_genome* A, const ne_genome* B, const ne_params&amp; params)"
-            landmarkType = "9">
+            startingLineNumber = "238"
+            endingLineNumber = "238"
+            landmarkName = "ne_genome::mutate_add_gene(ne_innovation_map *map, uint64 *innovation, const ne_params&amp; params)"
+            landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -152,13 +148,93 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NeuroEvolution/genome.cpp"
-            timestampString = "588166311.220619"
+            timestampString = "588417154.572848"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "360"
-            endingLineNumber = "360"
-            landmarkName = "ne_distance(const ne_genome *A, const ne_genome *B, const ne_params&amp; params)"
-            landmarkType = "9">
+            startingLineNumber = "207"
+            endingLineNumber = "207"
+            landmarkName = "ne_genome::mutate_add_node(ne_innovation_map *map, uint64 *innovation, uint64* node_ids, const ne_params&amp; params)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "NeuroEvolution/population.cpp"
+            timestampString = "588417154.5732009"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "96"
+            endingLineNumber = "96"
+            landmarkName = "ne_population::select()"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  shouldBeEnabled = "No"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "ne_population::select()"
+                  moduleName = "NeuroEvolution"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/arthur/work/code/NeuroEvolution/NeuroEvolution/population.cpp"
+                  timestampString = "588397583.852744"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "101"
+                  endingLineNumber = "101"
+                  offsetFromSymbolStart = "367">
+               </Location>
+               <Location
+                  shouldBeEnabled = "No"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "ne_population::select()"
+                  moduleName = "NeuroEvolution"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/arthur/work/code/NeuroEvolution/NeuroEvolution/population.cpp"
+                  timestampString = "588397583.855848"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "101"
+                  endingLineNumber = "101"
+                  offsetFromSymbolStart = "726">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "NeuroEvolution/population.cpp"
+            timestampString = "588417154.573261"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "114"
+            endingLineNumber = "114"
+            landmarkName = "ne_population::select()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "NeuroEvolution/population.cpp"
+            timestampString = "588417154.573311"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "115"
+            endingLineNumber = "115"
+            landmarkName = "ne_population::select()"
+            landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

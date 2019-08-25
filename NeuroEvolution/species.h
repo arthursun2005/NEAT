@@ -27,10 +27,10 @@ struct ne_species
     uint64 time_since_improvement;
     uint64 parents;
     uint64 offsprings;
+    
+    static inline bool compare (const ne_species* A, const ne_species* B) {
+        return A->avg_fitness > B->avg_fitness;
+    }
 };
-
-inline bool ne_species_sort (const ne_species* A, const ne_species* B) {
-    return A->avg_fitness > B->avg_fitness;
-}
 
 #endif /* species_h */
