@@ -34,10 +34,6 @@ public:
         return genomes[i];
     }
     
-    inline void compute(ne_genome* g) const {
-        g->_compute(params);
-    }
-    
     ne_genome* select();
     
     void reproduce();
@@ -48,12 +44,11 @@ public:
     ne_params params;
     
     uint64 innovation;
-    uint64 parents;
     uint64 node_ids;
     
 private:
     
-    ne_innovation_map map;
+    ne_innovation_set set;
     
     ne_genome* _breed(ne_species* sp);
     

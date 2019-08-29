@@ -16,7 +16,7 @@
 #include <iostream>
 #include <vector>
 
-#define ne_function(x) (1.0 + x / (1.0 + fabs(x)))
+#define ne_function(x) (0.5 + 0.5 * x / (1.0 + fabs(x)))
 
 struct ne_params {
     union {
@@ -34,14 +34,13 @@ struct ne_params {
     float64 mate_only_prob;
     float64 weights_mutation_power;
     float64 weights_mutation_rate;
-    float64 disable_inheritance;
+    float64 mutate_activation_prob;
     
     union {
-        uint64 activations;
+        uint64 timeout;
         uint64 begin_uint;
     };
     
-    uint64 timeout;
     uint64 population;
     uint64 dropoff_age;
     
@@ -81,14 +80,27 @@ struct ne_gene
     ne_gene(ne_node* i, ne_node* j) : i(i), j(j) {}
 };
 
+enum ne_innovation_type
+{
+    ne_new_node,
+    ne_new_gene
+};
+
 struct ne_innovation
 {
+    ne_innovation_type type;
+    
     uint64 i;
     uint64 j;
+    
+    uint64 innovation;
+    uint64 id;
+    
+    ne_innovation(ne_gene* gene) : i(gene->i->id), j(gene->j->id) {}
 };
 
 inline size_t ne_hash(uint64 i, uint64 j) {
-    return ((i * (i + 1)) >> 1) + j;
+    return (((i + j) * (i + j + 1)) >> 1) + j;
 }
 
 struct ne_gene_hash
@@ -115,27 +127,31 @@ struct ne_innovation_hash
 struct ne_innovation_equal
 {
     inline bool operator () (const ne_innovation& a, const ne_innovation& b) const {
-        return a.i == b.i && a.j == b.j;
+        return a.type == b.type && a.i == b.i && a.j == b.j;
     }
 };
 
-typedef std::unordered_set<ne_gene*, ne_gene_hash, ne_gene_equal> ne_innovation_set;
-typedef std::unordered_map<ne_innovation, uint64, ne_innovation_hash, ne_innovation_equal> ne_innovation_map;
+typedef std::unordered_set<ne_gene*, ne_gene_hash, ne_gene_equal> ne_gene_set;
+typedef std::unordered_set<ne_innovation, ne_innovation_hash, ne_innovation_equal> ne_innovation_set;
 typedef std::unordered_map<uint64, ne_node*> ne_nodes_map;
 
-inline void set_innovation(ne_innovation_map* map, uint64* innovation, ne_gene* gene) {
-    ne_innovation innov;
+inline void ne_get_innovation(ne_innovation_set* set, uint64* innovation, uint64* nodes_id, ne_innovation* p) {
+    ne_innovation_set::iterator it = set->find(*p);
     
-    innov.i = gene->i->id;
-    innov.j = gene->j->id;
-    
-    ne_innovation_map::iterator it = map->find(innov);
-    
-    if(it != map->end()) {
-        gene->innovation = it->second;
+    if(it != set->end()) {
+        p->innovation = it->innovation;
+        p->id = it->id;
     }else{
-        gene->innovation = (*innovation)++;
-        map->insert({innov, gene->innovation});
+        p->innovation = *innovation;
+        
+        if(p->type == ne_new_node) {
+            p->id = (*nodes_id)++;
+            *innovation += 2;
+        }else{
+            *innovation += 1;
+        }
+        
+        set->insert(*p);
     }
 }
 

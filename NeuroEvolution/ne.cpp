@@ -20,9 +20,8 @@ const std::string ne_params::names[] = {
     "mate_only_prob",
     "weights_mutation_power",
     "weights_mutation_rate",
-    "disable_inheritance",
+    "mutate_activation_prob",
     
-    "activations",
     "timeout",
     "population",
     "dropoff_age"

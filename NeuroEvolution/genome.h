@@ -53,26 +53,17 @@ public:
     
     void _destory();
     
-    void reset(uint64 inputs, uint64 outputs);
-    
-    void initialize(ne_innovation_map* map, uint64* innovation);
-    
-    void insert(ne_node* node);
-    
-    void insert(ne_gene* gene);
-    void pass_down(ne_gene* gene);
+    void reset(uint64 inputs, uint64 outputs, ne_innovation_set* set, uint64* innovation);
     
     void flush();
-    
-    bool done() const;
-        
-    void _compute(const ne_params& params);
+            
+    void compute();
             
     void mutate_weights(const ne_params& params);
     
-    void mutate_add_node(ne_innovation_map* map, uint64* innovation, uint64* node_ids, const ne_params& params);
+    void mutate_add_node(ne_innovation_set* set, uint64* innovation, uint64* node_ids, const ne_params& params);
     
-    void mutate_add_gene(ne_innovation_map* map, uint64* innovation, const ne_params& params);
+    void mutate_add_gene(ne_innovation_set* set, uint64* innovation, const ne_params& params);
         
     static ne_genome* crossover(const ne_genome* A, const ne_genome* B, const ne_params& params);
     static float64 distance(const ne_genome* A, const ne_genome* B, const ne_params& params);
@@ -80,31 +71,52 @@ public:
     float64 fitness;
     bool eliminated;
     
+    uint64 activations;
+    
 private:
     
-    ne_innovation_set set;
+    ne_node* find_node(ne_node* node);
+    
+    void insert(ne_node* node);
+    
+    void insert(ne_gene* gene);
+    
+    inline void pass_down(ne_gene* gene) {
+        gene->i = find_node(gene->i);
+        gene->j = find_node(gene->j);
+        
+        insert(gene);
+    }
+    
+    ne_gene_set set;
     ne_nodes_map nodes_map;
     
     uint64 input_size;
     uint64 output_size;
-    
-    uint64 activations;
-    
+        
     std::vector<ne_node*> nodes;
     std::vector<ne_gene*> genes;
 };
 
-inline void ne_mutate(ne_genome* genome, ne_innovation_map* map, uint64* innovation, uint64* node_ids, const ne_params& params) {
+inline void ne_mutate(ne_genome* genome, ne_innovation_set* set, uint64* innovation, uint64* node_ids, const ne_params& params) {
     if(random(0.0, 1.0) < params.new_node_prob) {
-        genome->mutate_add_node(map, innovation, node_ids, params);
+        genome->mutate_add_node(set, innovation, node_ids, params);
     }
     
     if(random(0.0, 1.0) < params.new_gene_prob) {
-        genome->mutate_add_gene(map, innovation, params);
+        genome->mutate_add_gene(set, innovation, params);
     }
     
     if(random(0.0, 1.0) < params.mutate_weights_prob) {
         genome->mutate_weights(params);
+    }
+    
+    if(random(0.0, 1.0) < params.mutate_activation_prob) {
+        if((rand32() & 1) || genome->activations == 1) {
+            ++genome->activations;
+        }else{
+            --genome->activations;
+        }
     }
 }
 

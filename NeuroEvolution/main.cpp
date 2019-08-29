@@ -15,7 +15,7 @@ ne_population population;
 
 #define time_step 0.01f
 
-int gens = 128;
+int gens = 64;
 ne_params params;
 
 struct Obj
@@ -54,7 +54,7 @@ struct Pendulum : public Obj
         m_p = 0.5;
         m = m_c + m_p;
         l = 0.6;
-        f = 20.0;
+        f = 10.0;
         b = 0.1;
     }
     
@@ -80,20 +80,24 @@ struct Pendulum : public Obj
         for(int i = 0; i < time_limit; ++i) {
             double c = cos(a);
             double s = sin(a);
+
+            double action = 0.0;
             
-            inputs[0]->value = vx;
-            inputs[1]->value = x;
-            inputs[2]->value = c;
-            inputs[3]->value = s;
-            inputs[4]->value = va;
-            
-            population.compute(gen);
-            
-            double action = outputs[0]->value;
-            
-            action = action < -1.0 ? -1.0 : (action > 1.0 ? 1.0 : action);
-            
-            action *= f;
+            if((i % 2) == 0) {
+                inputs[0]->value = vx;
+                inputs[1]->value = x;
+                inputs[2]->value = c;
+                inputs[3]->value = s;
+                inputs[4]->value = va;
+                
+                gen->compute();
+                
+                action = outputs[0]->value;
+                
+                action = action < -1.0 ? -1.0 : (action > 1.0 ? 1.0 : action);
+                
+                action *= f;
+            }
             
             double va2 = va * va;
             double sc = s * c;
@@ -137,7 +141,7 @@ struct XOR : public Obj
                 inputs[0]->value = a;
                 inputs[1]->value = b;
                 
-                population.compute(gen);
+                gen->compute();
                 
                 double d = outputs[0]->value - c;
                 fitness += 1.0 - d * d;
@@ -168,7 +172,7 @@ int main(int argc, const char * argv[]) {
     }
     
     initialize(argv[1]);
-    
+
     ne_genome* best = nullptr;
     
     std::vector<float64> highs;
@@ -188,7 +192,7 @@ int main(int argc, const char * argv[]) {
             std::cout << "Species: " << sp->avg_fitness << "  offsprings: " << sp->offsprings << "  size: " << sp->genomes.size() << std::endl;
         }
         
-        std::cout << "fitness: " << best->fitness << "  gene count: " << best->gene_count() << "  node count: " << best->node_count() << std::endl;
+        std::cout << "fitness: " << best->fitness << "  gene count: " << best->gene_count() << "  node count: " << best->node_count() << "  activations: " << best->activations << std::endl;
         
         std::cout << std::endl << std::endl << std::endl;
                         

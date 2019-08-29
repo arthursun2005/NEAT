@@ -11,13 +11,14 @@
 
 #include <cmath>
 #include <functional>
-#include <random>
 #include <cfloat>
 #include <iostream>
 
 typedef float float32;
 typedef double float64;
 
+typedef unsigned char uint8;
+typedef unsigned short uint16;
 typedef unsigned int uint32;
 typedef unsigned long uint64;
 
@@ -38,9 +39,27 @@ inline uint64 random(uint64 a, uint64 b) {
 }
 
 inline float64 gaussian_random() {
-    static std::default_random_engine g;
-    static std::normal_distribution<float64> d(0.0, 1.0);
-    return d(g);
+    static bool computed = false;
+    static float64 value;
+    
+    if(computed) {
+        computed = false;
+        return value;
+    }else{
+        float64 a, b, r, q;
+        
+        do {
+            a = random(-1.0, 1.0);
+            b = random(-1.0, 1.0);
+            r = a * a + b * b;
+        }  while (r >= 1.0 || r == 0.0);
+        
+        q = sqrt(-2.0 * log(r) / r);
+        
+        computed = true;
+        value = a * q;
+        return b * q;
+    }
 }
 
 #endif /* common_h */
