@@ -6,8 +6,8 @@
 //  Copyright © 2019 Arthur Sun. All rights reserved.
 //
 
-#ifndef species_h
-#define species_h
+#ifndef ne_species_h
+#define ne_species_h
 
 #include "genome.h"
 #include <limits>
@@ -33,4 +33,4 @@ struct ne_species
     }
 };
 
-#endif /* species_h */
+#endif /* ne_species_h */

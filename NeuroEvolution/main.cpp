@@ -152,7 +152,32 @@ struct XOR : public Obj
     }
 };
 
-typedef Pendulum obj_type;
+struct Count10 : public Obj
+{
+    static const uint64 input_size = 1;
+    static const uint64 output_size = 1;
+    
+    void run(ne_genome* gen) {
+        fitness = 0.0;
+        gen->flush();
+        
+        for(int i = 0; i < 10; ++i) {
+            ne_node** inputs = gen->inputs();
+            ne_node** outputs = gen->outputs();
+            
+            inputs[0]->value = 0.0;
+            
+            gen->compute();
+            
+            double d = outputs[0]->value - (i == 9 ? 1.0 : 0.0);
+            fitness += 1.0 - d * d;
+        }
+        
+        fitness *= 0.1;
+    }
+};
+
+typedef Count10 obj_type;
 
 std::vector<obj_type> objs(params.population);
 
@@ -161,7 +186,6 @@ void initialize(const char* file) {
     in.open(file);
     params.load(in);
     population.reset(params, obj_type::input_size, obj_type::output_size);
-    
     objs.resize(params.population);
 }
 
@@ -190,12 +214,20 @@ int main(int argc, const char * argv[]) {
         
         for(ne_species* sp : population.species) {
             std::cout << "Species: " << sp->avg_fitness << "  offsprings: " << sp->offsprings << "  size: " << sp->genomes.size() << std::endl;
+            
+            if(n == gens - 1) {
+                for(ne_genome* g : sp->genomes) {
+                    std::cout << "Genome begin" << std::endl;
+                    g->print();
+                    std::cout << "Genome end" << std::endl;
+                }
+            }
         }
         
         std::cout << "fitness: " << best->fitness << "  gene count: " << best->gene_count() << "  node count: " << best->node_count() << "  activations: " << best->activations << std::endl;
         
         std::cout << std::endl << std::endl << std::endl;
-                        
+        
         highs.push_back(best->fitness);
         
         population.reproduce();

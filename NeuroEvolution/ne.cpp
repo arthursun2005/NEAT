@@ -21,6 +21,7 @@ const std::string ne_params::names[] = {
     "weights_mutation_power",
     "weights_mutation_rate",
     "mutate_activation_prob",
+    "mate_avg_prob",
     
     "timeout",
     "population",

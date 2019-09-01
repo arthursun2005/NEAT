@@ -35,14 +35,11 @@ void ne_population::reset(const ne_params& _params, uint64 input_size, uint64 ou
     
     genomes.resize(params.population);
     
-    for(ne_genome*& genome : genomes) {
-        genome = new ne_genome();
-    }
-    
     innovation = 0;
     set.clear();
     
-    for(ne_genome* genome : genomes) {
+    for(ne_genome*& genome : genomes) {
+        genome = new ne_genome();
         genome->reset(input_size, output_size, &set, &innovation);
     }
     
@@ -56,7 +53,7 @@ ne_genome* ne_population::_breed(ne_species *sp) {
     
     uint64 i1 = random(0, sp->parents);
     
-    if(random(0.0, 1.0) < params.mutate_only_prob) {
+    if(random(0.0, 1.0) < params.mutate_only_prob || sp->parents == 1) {
         baby = new ne_genome(*sp->genomes[i1]);
         
         ne_mutate(baby, &set, &innovation, &node_ids, params);
@@ -108,11 +105,7 @@ ne_genome* ne_population::select() {
             ++sp->time_since_improvement;
         }
         
-        if(sp->time_since_improvement > params.dropoff_age && bf < best->fitness) {
-            for(ne_genome* g : sp->genomes) {
-                g->fitness = 0.0;
-            }
-        }else{
+        if(sp->time_since_improvement <= params.dropoff_age || bf == best->fitness) {
             for(uint64 i = 0; i < spsize; ++i) {
                 if(isnan(sp->genomes[i]->fitness))
                     sp->genomes[i]->fitness = 0.0;

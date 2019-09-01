@@ -15,17 +15,11 @@ void ne_genome::reset(uint64 inputs, uint64 outputs, ne_innovation_set* set, uin
     _destory();
     
     for(uint64 i = 0; i < input_size; ++i) {
-        ne_node* node = new ne_node();
-        node->id = i;
-        node->activations = 1;
-        insert(node);
+        find_node(i, ne_node())->activations = 1;
     }
     
     for(uint64 i = 0; i < output_size; ++i) {
-        uint64 q = input_size + i;
-        ne_node* node = new ne_node();
-        node->id = q;
-        insert(node);
+        find_node(input_size + i, ne_node());
     }
     
     for(uint64 i = 0; i < input_size; ++i) {
@@ -33,9 +27,7 @@ void ne_genome::reset(uint64 inputs, uint64 outputs, ne_innovation_set* set, uin
             uint64 q = input_size + j;
             ne_gene* gene = new ne_gene(nodes[i], nodes[q]);
             
-            ne_innovation p(gene);
-            p.type = ne_new_gene;
-            
+            ne_innovation p(gene, ne_new_gene);
             ne_get_innovation(set, innovation, nullptr, &p);
             
             gene->innovation = p.innovation;
@@ -66,40 +58,40 @@ void ne_genome::_destory() {
 void ne_genome::flush() {
     uint64 size = nodes.size();
     
-    for(uint64 i = input_size; i != size; ++i) {
-        nodes[i]->activations = 0;
-        nodes[i]->value = ne_function(0.0);
+    for(uint64 i = 0; i != size; ++i) {
+        nodes[i]->activations = i < input_size ? 1 : 0;
+        
+        if(i >= input_size)
+            nodes[i]->value = ne_function(0.0);
     }
 }
 
 void ne_genome::compute() {
-    uint64 size = nodes.size();
-
     uint64 q = input_size + output_size;
     
     uint64 n = 0;
     
     while(n != activations) {
-        for(uint64 i = input_size; i < size; ++i) {
-            nodes[i]->computed = false;
-            nodes[i]->sum = 0.0;
+        for(ne_node* node : nodes) {
+            node->computed = false;
+            node->sum = 0.0;
         }
         
         for(ne_gene* gene : genes) {
-            if(gene->i->activations != 0) {
+            if(gene->i->activations != 0 && gene->weight != 0.0) {
                 gene->j->computed = true;
                 gene->j->sum += gene->i->value * gene->weight;
             }
         }
         
-        for(uint64 i = input_size; i < size; ++i) {
-            if(nodes[i]->computed) {
-                ++nodes[i]->activations;
+        for(ne_node* node : nodes) {
+            if(node->computed) {
+                ++node->activations;
                 
-                if(i >= q)
-                    nodes[i]->value = ne_function(nodes[i]->sum);
+                if(node->id >= q)
+                    node->value = ne_function(node->sum);
                 else
-                    nodes[i]->value = nodes[i]->sum;
+                    node->value = node->sum;
             }
         }
         
@@ -133,15 +125,16 @@ void ne_genome::insert(ne_gene *gene) {
     genes.insert(end, gene);
 }
 
-ne_node* ne_genome::find_node(ne_node *n) {
-    ne_nodes_map::iterator itA = nodes_map.find(n->id);
+ne_node* ne_genome::find_node(uint64 id, const ne_node& n) {
+    ne_nodes_map::iterator it = nodes_map.find(id);
     
-    if(itA == nodes_map.end()) {
-        ne_node* node = new ne_node(*n);
+    if(it == nodes_map.end()) {
+        ne_node* node = new ne_node(n);
+        node->id = id;
         insert(node);
         return node;
     }else{
-        return itA->second;
+        return it->second;
     }
 }
 
@@ -162,18 +155,12 @@ void ne_genome::mutate_add_node(ne_innovation_set *set, uint64 *innovation, uint
         for(uint64 n = 0; n != params.timeout; ++n) {
             ne_gene* gene = genes[rand64() % gs];
             
-            if(gene->weight == 0.0) continue;
+            if(gene->weight == 0.0 || gene->i->id == input_size - 1) continue;
             
-            if(gene->i->id == input_size - 1) continue;
-            
-            ne_innovation p(gene);
-            p.type = ne_new_node;
-            
+            ne_innovation p(gene, ne_new_node);
             ne_get_innovation(set, innovation, node_ids, &p);
             
-            ne_node* node = new ne_node();
-            node->id = p.id;
-            insert(node);
+            ne_node* node = find_node(p.id, ne_node());
             
             {
                 ne_gene* gene1 = new ne_gene(gene->i, node);
@@ -218,9 +205,7 @@ void ne_genome::mutate_add_gene(ne_innovation_set *set, uint64 *innovation, cons
         }else{
             ne_gene* gene = new ne_gene(q);
             
-            ne_innovation p(gene);
-            p.type = ne_new_gene;
-            
+            ne_innovation p(gene, ne_new_gene);
             ne_get_innovation(set, innovation, nullptr, &p);
             
             gene->innovation = p.innovation;
@@ -269,6 +254,7 @@ ne_genome* ne_genome::crossover(const ne_genome* A, const ne_genome* B, const ne
     itB = B->genes.begin();
     
     bool a_over_b = A->fitness > B->fitness;
+    bool mate_avg = random(0.0, 1.0) < params.mate_avg_prob;
     
     ne_gene gene;
     bool skip;
@@ -285,7 +271,8 @@ ne_genome* ne_genome::crossover(const ne_genome* A, const ne_genome* B, const ne
         }else if((*itA)->innovation == (*itB)->innovation) {
             gene = **itA;
             
-            gene.weight = (rand32() & 1) ? (*itA)->weight : (*itB)->weight;
+            if(mate_avg) gene.weight = 0.5 * ((*itA)->weight + (*itB)->weight);
+            else gene.weight = (rand32() & 1) ? (*itA)->weight : (*itB)->weight;
             
             skip = false;
             
@@ -351,7 +338,7 @@ float64 ne_genome::distance(const ne_genome *A, const ne_genome *B, const ne_par
         }
     }
     
-    return miss + (align == 0 ? 0.0 : params.weights_power * W / (float64) align);
+    return miss + params.weights_power * W / (float64) align;
 }
 
 

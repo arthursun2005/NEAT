@@ -16,7 +16,7 @@
 #include <iostream>
 #include <vector>
 
-#define ne_function(x) (0.5 + 0.5 * x / (1.0 + fabs(x)))
+#define ne_function(x) (1.0 + x / (1.0 + fabs(x)))
 
 struct ne_params {
     union {
@@ -35,6 +35,7 @@ struct ne_params {
     float64 weights_mutation_power;
     float64 weights_mutation_rate;
     float64 mutate_activation_prob;
+    float64 mate_avg_prob;
     
     union {
         uint64 timeout;
@@ -92,11 +93,10 @@ struct ne_innovation
     
     uint64 i;
     uint64 j;
-    
     uint64 innovation;
     uint64 id;
     
-    ne_innovation(ne_gene* gene) : i(gene->i->id), j(gene->j->id) {}
+    inline ne_innovation(ne_gene* gene, ne_innovation_type type) : i(gene->i->id), j(gene->j->id), type(type) {}
 };
 
 inline size_t ne_hash(uint64 i, uint64 j) {

@@ -6,8 +6,8 @@
 //  Copyright © 2019 Arthur Sun. All rights reserved.
 //
 
-#ifndef genome_h
-#define genome_h
+#ifndef ne_genome_h
+#define ne_genome_h
 
 #include "ne.h"
 
@@ -64,7 +64,20 @@ public:
     void mutate_add_node(ne_innovation_set* set, uint64* innovation, uint64* node_ids, const ne_params& params);
     
     void mutate_add_gene(ne_innovation_set* set, uint64* innovation, const ne_params& params);
+    
+    void print() {
+        std::cout << "Fitness: " << fitness << std::endl;
+        std::cout << "Activations: " << activations << std::endl;
         
+        for(ne_node* node : nodes) {
+            std::cout << "Node: " << node->id << " " << node->value << " " << node->activations << std::endl;
+        }
+        
+        for(ne_gene* gene : genes) {
+            std::cout << "Gene: " << gene->innovation << " " << gene->i->id << " " << gene->j->id << " " << gene->weight << std::endl;
+        }
+    }
+    
     static ne_genome* crossover(const ne_genome* A, const ne_genome* B, const ne_params& params);
     static float64 distance(const ne_genome* A, const ne_genome* B, const ne_params& params);
     
@@ -75,15 +88,15 @@ public:
     
 private:
     
-    ne_node* find_node(ne_node* node);
+    ne_node* find_node(uint64 id, const ne_node& node);
     
     void insert(ne_node* node);
     
     void insert(ne_gene* gene);
     
     inline void pass_down(ne_gene* gene) {
-        gene->i = find_node(gene->i);
-        gene->j = find_node(gene->j);
+        gene->i = find_node(gene->i->id, *gene->i);
+        gene->j = find_node(gene->j->id, *gene->j);
         
         insert(gene);
     }
@@ -112,13 +125,12 @@ inline void ne_mutate(ne_genome* genome, ne_innovation_set* set, uint64* innovat
     }
     
     if(random(0.0, 1.0) < params.mutate_activation_prob) {
-        if((rand32() & 1) || genome->activations == 1) {
+        if((rand32() & 1) || genome->activations == 1)
             ++genome->activations;
-        }else{
+        else
             --genome->activations;
-        }
     }
 }
 
 
-#endif /* genome_h */
+#endif /* ne_genome_h */
