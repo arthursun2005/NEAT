@@ -70,7 +70,7 @@ public:
         std::cout << "Activations: " << activations << std::endl;
         
         for(ne_node* node : nodes) {
-            std::cout << "Node: " << node->id << " " << node->value << " " << node->activations << std::endl;
+            std::cout << "Node: " << node->id << " " << node->value << " " << node->activated << std::endl;
         }
         
         for(ne_gene* gene : genes) {
@@ -103,6 +103,8 @@ private:
     
     ne_gene_set set;
     ne_nodes_map nodes_map;
+    
+    uint64 bias_node;
     
     uint64 input_size;
     uint64 output_size;

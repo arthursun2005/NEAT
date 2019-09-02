@@ -20,7 +20,6 @@ ne_population& ne_population::operator = (const ne_population& population) {
     }
     
     innovation = population.innovation;
-    set = population.set;
     node_ids = population.node_ids;
     
     _speciate();
@@ -142,6 +141,8 @@ ne_genome* ne_population::select() {
 }
 
 void ne_population::reproduce() {
+    set.clear();
+    
     std::vector<ne_genome*> babies;
     
     for(ne_species* sp : species) {

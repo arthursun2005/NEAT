@@ -64,8 +64,7 @@ struct ne_node
     float64 sum;
     
     bool computed;
-    
-    uint64 activations;
+    bool activated;
     uint64 id;
 };
 
@@ -75,6 +74,7 @@ struct ne_gene
     ne_node* j;
     
     uint64 innovation;
+    
     float64 weight;
     
     ne_gene() {}
@@ -83,21 +83,29 @@ struct ne_gene
 
 enum ne_innovation_type
 {
-    ne_new_node,
+    ne_new_node = 0,
     ne_new_gene
 };
 
 struct ne_innovation
 {
-    ne_innovation_type type;
+    uint32 type;
     
     uint64 i;
     uint64 j;
-    uint64 innovation;
+    uint64 innovation1;
+    uint64 innovation2;
     uint64 id;
     
-    inline ne_innovation(ne_gene* gene, ne_innovation_type type) : i(gene->i->id), j(gene->j->id), type(type) {}
+    float64 weight;
+    
+    inline ne_innovation(ne_gene* gene, uint32 type) : i(gene->i->id), j(gene->j->id), type(type) {}
 };
+
+inline void ne_bind(ne_gene* gene, ne_innovation* p) {
+    gene->innovation = p->innovation1;
+    gene->weight = p->weight;
+}
 
 inline size_t ne_hash(uint64 i, uint64 j) {
     return (((i + j) * (i + j + 1)) >> 1) + j;
@@ -127,7 +135,18 @@ struct ne_innovation_hash
 struct ne_innovation_equal
 {
     inline bool operator () (const ne_innovation& a, const ne_innovation& b) const {
-        return a.type == b.type && a.i == b.i && a.j == b.j;
+        if(a.type != b.type) return false;
+        
+        switch(a.type) {
+            case ne_new_gene:
+                return a.i == b.i && a.j == b.j;
+                
+            case ne_new_node:
+                return a.innovation2 == a.innovation2 && a.i == b.i && a.j == b.j;
+                
+            default:
+                return false;
+        }
     }
 };
 
@@ -137,18 +156,20 @@ typedef std::unordered_map<uint64, ne_node*> ne_nodes_map;
 
 inline void ne_get_innovation(ne_innovation_set* set, uint64* innovation, uint64* nodes_id, ne_innovation* p) {
     ne_innovation_set::iterator it = set->find(*p);
-    
+
     if(it != set->end()) {
-        p->innovation = it->innovation;
+        p->innovation1 = it->innovation1;
         p->id = it->id;
+        p->weight = it->weight;
     }else{
-        p->innovation = *innovation;
+        p->innovation1 = *innovation;
         
         if(p->type == ne_new_node) {
             p->id = (*nodes_id)++;
-            *innovation += 2;
+            (*innovation) += 2;
         }else{
-            *innovation += 1;
+            p->weight = gaussian_random();
+            (*innovation) += 1;
         }
         
         set->insert(*p);
